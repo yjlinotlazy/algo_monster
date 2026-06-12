@@ -34,6 +34,8 @@ Algo Monster is intended to run locally on your machine.
 5. Run the test cases and iterate until they pass.
 6. Update the learning status when appropriate.
 
+![scn1](scn1.png)
+
 User-specific progress, settings, and saved solutions are stored under
 `~/.config/algo_monster/`.
 
