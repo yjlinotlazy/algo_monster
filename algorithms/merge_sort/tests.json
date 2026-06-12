@@ -1,0 +1,18 @@
+[
+  {
+    "name": "sorts unsorted values",
+    "code": "values = [5, 2, 9, 1, 5, 6]\nassert merge_sort(values) == [1, 2, 5, 5, 6, 9]"
+  },
+  {
+    "name": "handles an empty list",
+    "code": "assert merge_sort([]) == []"
+  },
+  {
+    "name": "handles one value",
+    "code": "assert merge_sort([7]) == [7]"
+  },
+  {
+    "name": "does not modify input",
+    "code": "values = [3, 1, 2]\nresult = merge_sort(values)\nassert result == [1, 2, 3]\nassert values == [3, 1, 2]"
+  }
+]

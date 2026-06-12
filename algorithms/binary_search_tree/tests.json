@@ -1,0 +1,18 @@
+[
+  {
+    "name": "starts empty",
+    "code": "tree = BinarySearchTree()\nassert tree.contains(10) is False\nassert tree.in_order() == []"
+  },
+  {
+    "name": "inserts and finds values",
+    "code": "tree = BinarySearchTree()\nfor value in [5, 3, 7, 1, 4]:\n    tree.insert(value)\nassert tree.contains(4) is True\nassert tree.contains(6) is False"
+  },
+  {
+    "name": "returns in-order values",
+    "code": "tree = BinarySearchTree()\nfor value in [5, 3, 7, 1, 4, 6, 8]:\n    tree.insert(value)\nassert tree.in_order() == [1, 3, 4, 5, 6, 7, 8]"
+  },
+  {
+    "name": "keeps duplicates",
+    "code": "tree = BinarySearchTree()\nfor value in [5, 3, 5, 3]:\n    tree.insert(value)\nassert tree.in_order() == [3, 3, 5, 5]"
+  }
+]

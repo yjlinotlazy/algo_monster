@@ -1,0 +1,18 @@
+[
+  {
+    "name": "starts with separate elements",
+    "code": "uf = UnionFind(4)\nassert uf.connected(0, 1) is False\nassert uf.connected(2, 3) is False"
+  },
+  {
+    "name": "connects elements after union",
+    "code": "uf = UnionFind(5)\nuf.union(0, 1)\nuf.union(1, 2)\nassert uf.connected(0, 2) is True\nassert uf.connected(0, 4) is False"
+  },
+  {
+    "name": "handles repeated unions",
+    "code": "uf = UnionFind(3)\nuf.union(0, 1)\nuf.union(0, 1)\nassert uf.connected(0, 1) is True\nassert uf.connected(1, 2) is False"
+  },
+  {
+    "name": "merges two existing sets",
+    "code": "uf = UnionFind(6)\nuf.union(0, 1)\nuf.union(2, 3)\nuf.union(1, 3)\nassert uf.connected(0, 2) is True\nassert uf.connected(0, 4) is False"
+  }
+]
