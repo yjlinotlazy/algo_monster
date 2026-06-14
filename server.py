@@ -13,12 +13,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-
 ROOT = Path(__file__).resolve().parent
 ALGORITHMS_DIR = ROOT / "algorithms"
 STATIC_DIR = ROOT / "web"
 RUNNER = ROOT / "runner.py"
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "algo_monster"
+CONFIG_DIR = (
+    Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "algo_monster"
+)
 SOLUTIONS_DIR = CONFIG_DIR / "solutions"
 PROGRESS_PATH = CONFIG_DIR / "progress.json"
 TIMEOUT_SECONDS = 3
@@ -70,7 +71,10 @@ def read_algorithm(algo_id: str) -> dict:
         "meta": meta,
         "prompt": (algo_dir / "prompt.md").read_text(encoding="utf-8"),
         "starter": (algo_dir / "starter.py").read_text(encoding="utf-8"),
-        "tests": [{"name": test.get("name", f"Test {index + 1}")} for index, test in enumerate(tests)],
+        "tests": [
+            {"name": test.get("name", f"Test {index + 1}")}
+            for index, test in enumerate(tests)
+        ],
     }
 
 
@@ -173,7 +177,10 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "AlgoMonster/0.1"
 
     def log_message(self, format: str, *args) -> None:
-        sys.stderr.write("%s - - [%s] %s\n" % (self.client_address[0], self.log_date_time_string(), format % args))
+        sys.stderr.write(
+            "%s - - [%s] %s\n"
+            % (self.client_address[0], self.log_date_time_string(), format % args)
+        )
 
     def do_GET(self) -> None:
         try:
@@ -237,7 +244,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             code = body.get("code")
             if not isinstance(code, str):
-                self.send_error_json(HTTPStatus.BAD_REQUEST, "Expected string field: code.")
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected string field: code."
+                )
                 return
             save_solution(algo_id, code)
             self.send_json({"ok": True})
@@ -273,7 +282,9 @@ class Handler(BaseHTTPRequestHandler):
         code = body.get("code")
         test_index = body.get("test_index")
         if not isinstance(algo_id, str) or not isinstance(code, str):
-            self.send_error_json(HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code.")
+            self.send_error_json(
+                HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code."
+            )
             return
         try:
             algo_id = safe_algorithm_id(algo_id)
@@ -281,7 +292,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown algorithm.")
             return
         if test_index is not None and not isinstance(test_index, int):
-            self.send_error_json(HTTPStatus.BAD_REQUEST, "test_index must be an integer.")
+            self.send_error_json(
+                HTTPStatus.BAD_REQUEST, "test_index must be an integer."
+            )
             return
 
         result = run_tests(algo_id, code, test_index)
@@ -289,6 +302,9 @@ class Handler(BaseHTTPRequestHandler):
             progress = load_progress()
             current = progress.get(algo_id, {})
             current["passing"] = bool(result.get("ok"))
+            # Auto-save solution when all tests pass (run all)
+            if result.get("ok"):
+                save_solution(algo_id, code)
             progress[algo_id] = current
             save_progress(progress)
         self.send_json(result)
@@ -299,7 +315,10 @@ class Handler(BaseHTTPRequestHandler):
         else:
             clean = Path(unquote(path).lstrip("/"))
             file_path = (STATIC_DIR / clean).resolve()
-            if STATIC_DIR.resolve() not in file_path.parents and file_path != STATIC_DIR.resolve():
+            if (
+                STATIC_DIR.resolve() not in file_path.parents
+                and file_path != STATIC_DIR.resolve()
+            ):
                 self.send_error(HTTPStatus.FORBIDDEN)
                 return
 
@@ -307,7 +326,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND)
             return
 
-        content_type = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        content_type = (
+            mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        )
         data = file_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)

@@ -220,6 +220,11 @@ async function runTests(testIndex = null) {
         item.progress = { ...(item.progress || {}), passing: result.ok };
       }
       renderAlgorithmList();
+      // If all tests passed, also update the learning status to "learned"
+      if (result.ok && els.learningStatus.value !== "learned") {
+        els.learningStatus.value = "learned";
+        saveProgress();
+      }
     }
   } finally {
     setBusy(false);
