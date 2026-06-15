@@ -1,0 +1,42 @@
+[
+  {
+    "name": "single insert and search",
+    "code": "t = Trie()\nt.insert('hello')\nassert t.search('hello') == True"
+  },
+  {
+    "name": "search missing word",
+    "code": "t = Trie()\nt.insert('hello')\nassert t.search('world') == False"
+  },
+  {
+    "name": "prefix matches longer word",
+    "code": "t = Trie()\nt.insert('hello')\nassert t.starts_with('hel') == True"
+  },
+  {
+    "name": "prefix of a shorter word that doesn't exist",
+    "code": "t = Trie()\nt.insert('hell')\nassert t.search('hello') == False\nassert t.starts_with('hell') == True"
+  },
+  {
+    "name": "insert and search same word twice",
+    "code": "t = Trie()\nt.insert('apple')\nt.insert('apple')\nassert t.search('apple') == True"
+  },
+  {
+    "name": "partial prefix that doesn't match any inserted word",
+    "code": "t = Trie()\nt.insert('hello')\nassert t.starts_with('hey') == False"
+  },
+  {
+    "name": "multiple words with common prefix",
+    "code": "t = Trie()\nw = ['apple', 'app', 'application', 'apply']\nfor w_ in w:\n    t.insert(w_)\nassert t.search('apple') == True\nassert t.search('app') == True\nassert t.search('applic') == False\nassert t.starts_with('app') == True"
+  },
+  {
+    "name": "single character word",
+    "code": "t = Trie()\nt.insert('a')\nassert t.search('a') == True\nassert t.starts_with('a') == True"
+  },
+  {
+    "name": "longest common prefix chain",
+    "code": "t = Trie()\nw = ['a', 'ab', 'abc', 'abcd']\nfor w_ in w:\n    t.insert(w_)\nassert t.search('abcd') == True\nassert t.starts_with('abc') == True\nassert t.search('abcde') == False"
+  },
+  {
+    "name": "overlapping words where one is suffix of another",
+    "code": "t = Trie()\nt.insert('pineapple')\nt.insert('ple')\nassert t.search('pineapple') == True\nassert t.search('ple') == True\nassert t.starts_with('pin') == True"
+  }
+]

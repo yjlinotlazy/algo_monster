@@ -1,0 +1,16 @@
+class TreeNode:
+    def __init__(self, key):
+        ...
+
+class AVLTree:
+    def __init__(self):
+        ...
+
+    def insert(self, key: int) -> None:
+        ...
+
+    def search(self, key: int) -> bool:
+        ...
+
+    def inorder(self) -> list[int]:
+        ...

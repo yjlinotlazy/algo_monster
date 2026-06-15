@@ -1,0 +1,42 @@
+[
+  {
+    "name": "empty tree",
+    "code": "assert level_order(None) == []"
+  },
+  {
+    "name": "single node",
+    "code": "root = TreeNode(1)\nassert level_order(root) == [[1]]"
+  },
+  {
+    "name": "two levels, left child only",
+    "code": "root = TreeNode(1)\nroot.left = TreeNode(2)\nassert level_order(root) == [[1], [2]]"
+  },
+  {
+    "name": "two levels, right child only",
+    "code": "root = TreeNode(1)\nroot.right = TreeNode(3)\nassert level_order(root) == [[1], [3]]"
+  },
+  {
+    "name": "full binary tree of height 2",
+    "code": "root = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nassert level_order(root) == [[1], [2, 3]]"
+  },
+  {
+    "name": "deeper tree, three levels",
+    "code": "root = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nroot.left.left = TreeNode(4)\nroot.left.right = TreeNode(5)\nassert level_order(root) == [[1], [2, 3], [4, 5]]"
+  },
+  {
+    "name": "skewed left tree",
+    "code": "root = TreeNode(1)\nroot.left = TreeNode(2)\nroot.left.left = TreeNode(3)\nassert level_order(root) == [[1], [2], [3]]"
+  },
+  {
+    "name": "skewed right tree",
+    "code": "root = TreeNode(1)\nroot.right = TreeNode(2)\nroot.right.right = TreeNode(3)\nassert level_order(root) == [[1], [2], [3]]"
+  },
+  {
+    "name": "tree with sparse levels",
+    "code": "root = TreeNode(1)\nroot.left = TreeNode(2)\nroot.right = TreeNode(3)\nroot.right.right = TreeNode(6)\nassert level_order(root) == [[1], [2, 3], [6]]"
+  },
+  {
+    "name": "larger tree",
+    "code": "root = TreeNode(3)\nroot.left = TreeNode(9)\nroot.right = TreeNode(20)\nroot.right.left = TreeNode(15)\nroot.right.right = TreeNode(7)\nassert level_order(root) == [[3], [9, 20], [15, 7]]"
+  }
+]

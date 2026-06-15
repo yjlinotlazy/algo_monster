@@ -1,0 +1,42 @@
+[
+  {
+    "name": "insert and search single node",
+    "code": "t = AVLTree()\nt.insert(10)\nassert t.search(10) == True\nassert t.search(5) == False"
+  },
+  {
+    "name": "inorder of single node",
+    "code": "t = AVLTree()\nt.insert(10)\nassert t.inorder() == [10]"
+  },
+  {
+    "name": "insert sorted sequence (tests balancing)",
+    "code": "t = AVLTree()\nfor i in range(1, 6):\n    t.insert(i)\nassert t.inorder() == [1, 2, 3, 4, 5]"
+  },
+  {
+    "name": "insert reverse sorted sequence (tests balancing)",
+    "code": "t = AVLTree()\nfor i in range(5, 0, -1):\n    t.insert(i)\nassert t.inorder() == [1, 2, 3, 4, 5]"
+  },
+  {
+    "name": "insert descending sequence",
+    "code": "t = AVLTree()\nfor i in range(10, -1, -1):\n    t.insert(i)\nassert t.inorder() == list(range(0, 11))"
+  },
+  {
+    "name": "search after insertion",
+    "code": "t = AVLTree()\nt.insert(15)\nt.insert(10)\nt.insert(20)\nassert t.search(10) == True\nassert t.search(15) == True\nassert t.search(20) == True\nassert t.search(25) == False"
+  },
+  {
+    "name": "insert duplicates kept as tree (no duplicates)",
+    "code": "t = AVLTree()\nt.insert(10)\nt.insert(10)\nt.insert(10)\nassert t.inorder() == [10]"
+  },
+  {
+    "name": "alternating insert order",
+    "code": "t = AVLTree()\nfor i in [3, 2, 4, 1, 5]:\n    t.insert(i)\nassert t.inorder() == [1, 2, 3, 4, 5]"
+  },
+  {
+    "name": "empty tree search and inorder",
+    "code": "t = AVLTree()\nassert t.search(1) == False\nassert t.inorder() == []"
+  },
+  {
+    "name": "large insertion order preserves balance",
+    "code": "t = AVLTree()\nn = 20\ndata = [5, 3, 7, 1, 4, 6, 8, 2, 9, 0, 10, 12, 11, 14, 13, 15, 17, 16, 18, 19]\nfor x in data:\n    t.insert(x)\nassert t.inorder() == list(range(n))"
+  }
+]
