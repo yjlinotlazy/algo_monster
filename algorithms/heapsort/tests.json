@@ -1,0 +1,18 @@
+[
+  {
+    "name": "sorts a small list",
+    "code": "assert heapsort([3, 6, 2, 7, 1]) == [1, 2, 3, 6, 7]"
+  },
+  {
+    "name": "handles sorted input",
+    "code": "assert heapsort([1, 2, 3]) == [1, 2, 3]"
+  },
+  {
+    "name": "handles empty list",
+    "code": "assert heapsort([]) == []"
+  },
+  {
+    "name": "handles duplicates",
+    "code": "assert heapsort([4, 1, 4, 2, 1]) == [1, 1, 2, 4, 4]"
+  }
+]

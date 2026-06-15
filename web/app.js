@@ -1,3 +1,4 @@
+// ── State & DOM refs ───────────────────────────────────────────────
 const state = {
   algorithms: [],
   selectedId: null,
@@ -6,6 +7,7 @@ const state = {
   resultsByName: new Map(),
 };
 
+// Cached DOM element references.
 const els = {
   list: document.querySelector("#algorithm-list"),
   search: document.querySelector("#search"),
@@ -23,6 +25,9 @@ const els = {
   learningStatus: document.querySelector("#learning-status"),
 };
 
+// ── Helpers ────────────────────────────────────────────────────────
+// Escaping, markdown rendering, and the fetch wrapper used by all API calls.
+
 function escapeHtml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -31,6 +36,7 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;");
 }
 
+// Render prompt markdown into HTML (h1, h2, code blocks, paragraphs).
 function renderMarkdown(markdown) {
   const lines = markdown.split("\n");
   let html = "";
@@ -83,6 +89,7 @@ function inlineMarkdown(value) {
   return escapeHtml(value).replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
+// Fetch JSON from the backend server; throws on non-2xx responses.
 async function api(path, options = {}) {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -95,6 +102,9 @@ async function api(path, options = {}) {
   return data;
 }
 
+// ── Algorithm list & navigation ─────────────────────────────────────
+
+// Load algorithms from server; auto-selects the first one.
 async function loadAlgorithms() {
   const data = await api("/api/algorithms");
   state.algorithms = data.algorithms;
@@ -104,6 +114,7 @@ async function loadAlgorithms() {
   }
 }
 
+// Filter and render the sidebar list based on search text.
 function renderAlgorithmList() {
   const query = state.filter.toLowerCase();
   const algorithms = state.algorithms.filter((algorithm) => {
@@ -126,6 +137,9 @@ function renderAlgorithmList() {
     els.list.appendChild(button);
   }
 }
+
+// ── Algorithm detail view ──────────────────────────────────────────
+// Load full algorithm data (prompt, starter, solution) and populate the editor area.
 
 async function selectAlgorithm(id) {
   state.selectedId = id;
@@ -150,6 +164,9 @@ async function selectAlgorithm(id) {
   }
 }
 
+// ── Test runner UI ─────────────────────────────────────────────────
+// Render test rows with per-test "Run" buttons wired to runTests(index).
+
 function renderTests() {
   els.tests.innerHTML = "";
   const tests = state.selected?.tests || [];
@@ -170,6 +187,8 @@ function renderTests() {
     els.tests.appendChild(row);
   });
 }
+
+// ── Actions ────────────────────────────────────────────────────────
 
 async function saveSolution() {
   if (!state.selectedId) return;
@@ -198,6 +217,7 @@ async function saveProgress() {
   renderAlgorithmList();
 }
 
+// Run a single test (by index) or all tests (null).
 async function runTests(testIndex = null) {
   if (!state.selectedId) return;
   setBusy(true);
@@ -231,6 +251,8 @@ async function runTests(testIndex = null) {
   }
 }
 
+// ── Results display ────────────────────────────────────────────────
+
 function showResults(result) {
   state.resultsByName = new Map(result.results.map((item) => [item.name, item]));
   const summary = result.summary || { passed: 0, failed: 0, total: 0 };
@@ -261,11 +283,14 @@ function clearResults() {
   renderTests();
 }
 
+// Disable actionable controls while an async operation is in flight.
 function setBusy(isBusy) {
   els.saveBtn.disabled = isBusy;
   els.runBtn.disabled = isBusy;
   els.learningStatus.disabled = isBusy;
 }
+
+// ── Event wiring & bootstrap ───────────────────────────────────────
 
 els.search.addEventListener("input", () => {
   state.filter = els.search.value;
@@ -294,6 +319,7 @@ els.runBtn.addEventListener("click", () => runTests(null));
 els.clearBtn.addEventListener("click", clearResults);
 els.learningStatus.addEventListener("change", saveProgress);
 
+// Boot the app; catch startup errors.
 loadAlgorithms().catch((error) => {
   els.results.className = "results";
   els.results.innerHTML = `<div class="result-item"><strong>Startup error</strong><pre>${escapeHtml(error.message)}</pre></div>`;

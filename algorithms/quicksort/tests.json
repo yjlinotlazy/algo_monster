@@ -1,0 +1,22 @@
+[
+  {
+    "name": "sorts a small list",
+    "code": "assert quicksort([3, 1, 4, 1, 5]) == [1, 1, 3, 4, 5]"
+  },
+  {
+    "name": "handles sorted input",
+    "code": "assert quicksort([1, 2, 3, 4, 5]) == [1, 2, 3, 4, 5]"
+  },
+  {
+    "name": "handles reverse-sorted input",
+    "code": "assert quicksort([5, 4, 3, 2, 1]) == [1, 2, 3, 4, 5]"
+  },
+  {
+    "name": "handles empty list",
+    "code": "assert quicksort([]) == []"
+  },
+  {
+    "name": "handles single element",
+    "code": "assert quicksort([42]) == [42]"
+  }
+]

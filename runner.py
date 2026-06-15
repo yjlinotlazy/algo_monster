@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""CLI utility — imports a solution module and runs algorithm tests against it."""
+
 from __future__ import annotations
 
 import argparse
@@ -12,6 +14,7 @@ from pathlib import Path
 
 
 def load_solution(path: Path):
+    """Import a solution module from *path* as ``algo_monster_solution``."""
     spec = importlib.util.spec_from_file_location("algo_monster_solution", path)
     if spec is None or spec.loader is None:
         raise RuntimeError("Could not load solution module.")
@@ -22,6 +25,7 @@ def load_solution(path: Path):
 
 
 def load_tests(path: Path) -> list[dict]:
+    """Parse *tests.json*, validating that it contains a list."""
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, list):
         raise ValueError("tests.json must contain a list.")
@@ -29,6 +33,7 @@ def load_tests(path: Path) -> list[dict]:
 
 
 def run_test(test: dict, namespace: dict) -> dict:
+    """Execute one test's code in *namespace*; return a result dict."""
     name = test.get("name", "Unnamed test")
     code = test.get("code")
     if not isinstance(code, str):
@@ -49,6 +54,7 @@ def run_test(test: dict, namespace: dict) -> dict:
 
 
 def main() -> None:
+    """CLI entry point — loads solution + tests, runs them, prints JSON result."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--algorithm-dir", required=True)
     parser.add_argument("--solution", required=True)

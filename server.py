@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""Local web server for Algo Monster — serves the frontend, exposes APIs for
+algorithms/solutions/progress, and runs user code against tests."""
+
 from __future__ import annotations
 
 import argparse
@@ -26,12 +29,14 @@ TIMEOUT_SECONDS = 3
 
 
 def ensure_config() -> None:
+    """Create config/solutions directories and an empty progress.json if missing."""
     SOLUTIONS_DIR.mkdir(parents=True, exist_ok=True)
     if not PROGRESS_PATH.exists():
         PROGRESS_PATH.write_text("{}", encoding="utf-8")
 
 
 def load_json(path: Path, default):
+    """Load JSON from *path*, returning *default* on missing file or parse error."""
     if not path.exists():
         return default
     try:
@@ -41,11 +46,13 @@ def load_json(path: Path, default):
 
 
 def write_json(path: Path, data) -> None:
+    """Write *data* as indented JSON to *path*, creating parent dirs as needed."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def algorithm_ids() -> set[str]:
+    """Return the set of known algorithm directory names."""
     if not ALGORITHMS_DIR.exists():
         return set()
     return {
@@ -56,6 +63,7 @@ def algorithm_ids() -> set[str]:
 
 
 def safe_algorithm_id(raw_id: str) -> str:
+    """Validate and URL-decode *raw_id*, raising KeyError if unknown."""
     algo_id = unquote(raw_id)
     if algo_id not in algorithm_ids():
         raise KeyError(algo_id)
@@ -63,6 +71,7 @@ def safe_algorithm_id(raw_id: str) -> str:
 
 
 def read_algorithm(algo_id: str) -> dict:
+    """Read an algorithm's metadata, prompt, starter code, and test list."""
     algo_dir = ALGORITHMS_DIR / algo_id
     meta = load_json(algo_dir / "meta.json", {})
     tests = load_json(algo_dir / "tests.json", [])
@@ -79,10 +88,12 @@ def read_algorithm(algo_id: str) -> dict:
 
 
 def solution_path(algo_id: str) -> Path:
+    """Return the Path where the saved solution for *algo_id* lives."""
     return SOLUTIONS_DIR / f"{algo_id}.py"
 
 
 def read_solution(algo_id: str) -> str:
+    """Read saved solution for *algo_id*, falling back to the starter template."""
     saved = solution_path(algo_id)
     if saved.exists():
         return saved.read_text(encoding="utf-8")
@@ -90,22 +101,26 @@ def read_solution(algo_id: str) -> str:
 
 
 def save_solution(algo_id: str, code: str) -> None:
+    """Write *code* as the saved solution for *algo_id*."""
     SOLUTIONS_DIR.mkdir(parents=True, exist_ok=True)
     solution_path(algo_id).write_text(code, encoding="utf-8")
 
 
 def load_progress() -> dict:
+    """Load user progress from config, guaranteeing a dict return."""
     ensure_config()
     progress = load_json(PROGRESS_PATH, {})
     return progress if isinstance(progress, dict) else {}
 
 
 def save_progress(progress: dict) -> None:
+    """Persist *progress* to disk."""
     ensure_config()
     write_json(PROGRESS_PATH, progress)
 
 
 def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
+    """Run user code against tests (via runner.py), returning a result dict."""
     with tempfile.TemporaryDirectory(prefix="algo_monster_") as tmp:
         solution = Path(tmp) / "solution.py"
         solution.write_text(code, encoding="utf-8")
@@ -174,6 +189,7 @@ def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
+    """HTTP request handler — serves static files and exposes /api/ endpoints."""
     server_version = "AlgoMonster/0.1"
 
     def log_message(self, format: str, *args) -> None:
@@ -360,6 +376,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    """Parse args, ensure config, start the ThreadingHTTPServer until interrupt."""
     parser = argparse.ArgumentParser(description="Run the Algo Monster local web app.")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8000, type=int)
