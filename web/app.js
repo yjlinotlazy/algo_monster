@@ -261,17 +261,20 @@ function showResults(result) {
   els.results.innerHTML = result.results
     .map((item) => {
       const body = item.error || item.stdout || "";
+      // Look up the test input code by name.
+      const test = (state.selected?.tests || []).find((t) => t.name === item.name);
+      const inputCode = test ? escapeHtml(test.code) : null;
       return `
         <div class="result-item">
           <div class="result-title">
             <span>${escapeHtml(item.name)}</span>
             <span class="${item.passed ? "passed" : "failed"}">${item.passed ? "Passed" : "Failed"}</span>
           </div>
+          ${inputCode ? `<pre class="result-input">Input: ${inputCode}</pre>` : ""}
           ${body ? `<pre>${escapeHtml(body)}</pre>` : ""}
         </div>
       `;
     })
-    .join("");
   renderTests();
 }
 

@@ -52,7 +52,7 @@ def write_json(path: Path, data) -> None:
 
 
 def algorithm_ids() -> set[str]:
-    """Return the set of known algorithm directory names."""
+    """Return the set of available algorithm directory names."""
     if not ALGORITHMS_DIR.exists():
         return set()
     return {
@@ -81,7 +81,7 @@ def read_algorithm(algo_id: str) -> dict:
         "prompt": (algo_dir / "prompt.md").read_text(encoding="utf-8"),
         "starter": (algo_dir / "starter.py").read_text(encoding="utf-8"),
         "tests": [
-            {"name": test.get("name", f"Test {index + 1}")}
+            {"name": test.get("name", f"Test {index + 1}"), "code": test["code"]}
             for index, test in enumerate(tests)
         ],
     }
