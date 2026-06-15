@@ -69,21 +69,52 @@ def safe_algorithm_id(raw_id: str) -> str:
         raise KeyError(algo_id)
     return algo_id
 
+def _generate_test_code(test: dict, function_name: str) -> str:
+    """Generate test code from input/output fields when 'code' is missing."""
+    if "code" in test and isinstance(test["code"], str):
+        return test["code"]
+
+    name = test.get("name", "Unnamed test")
+    expected = test.get("output")
+    input_expr = test.get("input", "")
+
+    code = f"# Test: {name}\n"
+    if input_expr:
+        code += f"_args = {input_expr}\n"
+        code += f"_result = {function_name}(*_args) if isinstance(_args, tuple) else {function_name}(_args)\n"
+    else:
+        code += f"_result = {function_name}()\n"
+    if expected is not None:
+        expected_str = json.dumps(expected) if not isinstance(expected, str) else expected
+        code += f"assert _result == {expected_str}\n"
+
+    return code
 
 def read_algorithm(algo_id: str) -> dict:
     """Read an algorithm's metadata, prompt, starter code, and test list."""
     algo_dir = ALGORITHMS_DIR / algo_id
     meta = load_json(algo_dir / "meta.json", {})
-    tests = load_json(algo_dir / "tests.json", [])
+    tests_raw = load_json(algo_dir / "tests.json", [])
+    if isinstance(tests_raw, dict):
+        function_name = tests_raw.get("function", "solution")
+        tests_list = tests_raw.get("test_cases", tests_raw.get("tests", []))
+        tests = []
+        for index, test in enumerate(tests_list):
+            code = test.get("code")
+            if not code or not isinstance(code, str):
+                code = _generate_test_code(test, function_name)
+            tests.append({"name": test.get("name", f"Test {index + 1}"), "code": code})
+    else:
+        tests = [
+            {"name": test.get("name", f"Test {index + 1}"), "code": test["code"]}
+            for index, test in enumerate(tests_raw)
+        ]
     return {
         "id": algo_id,
         "meta": meta,
         "prompt": (algo_dir / "prompt.md").read_text(encoding="utf-8"),
         "starter": (algo_dir / "starter.py").read_text(encoding="utf-8"),
-        "tests": [
-            {"name": test.get("name", f"Test {index + 1}"), "code": test["code"]}
-            for index, test in enumerate(tests)
-        ],
+        "tests": tests,
     }
 
 
@@ -190,6 +221,7 @@ def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
 
 class Handler(BaseHTTPRequestHandler):
     """HTTP request handler — serves static files and exposes /api/ endpoints."""
+
     server_version = "AlgoMonster/0.1"
 
     def log_message(self, format: str, *args) -> None:

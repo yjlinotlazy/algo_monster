@@ -24,9 +24,39 @@ def load_solution(path: Path):
     return module
 
 
+def _generate_test_code(test: dict, function_name: str) -> str:
+    """Generate test code from input/output fields when 'code' is missing."""
+    if "code" in test and isinstance(test["code"], str):
+        return test["code"]
+
+    name = test.get("name", "Unnamed test")
+    expected = test.get("output")
+    input_expr = test.get("input", "")
+
+    code = f"# Test: {name}\n"
+    if input_expr:
+        code += f"_args = {input_expr}\n"
+        code += f"_result = {function_name}(*_args) if isinstance(_args, tuple) else {function_name}(_args)\n"
+    else:
+        code += f"_result = {function_name}()\n"
+    if expected is not None:
+        expected_str = json.dumps(expected) if not isinstance(expected, str) else expected
+        code += f"assert _result == {expected_str}\n"
+
+    return code
+
+
 def load_tests(path: Path) -> list[dict]:
-    """Parse *tests.json*, validating that it contains a list."""
+    """Parse *tests.json*, supporting both 'code' and 'input'/'output' formats."""
     data = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(data, dict):
+        # { "function": "binary_search", "test_cases": [...] } format
+        function_name = data.get("function", "solution")
+        tests_list = data.get("test_cases", data.get("tests", []))
+        for test in tests_list:
+            if "code" not in test or not isinstance(test["code"], str):
+                test["code"] = _generate_test_code(test, function_name)
+        return tests_list
     if not isinstance(data, list):
         raise ValueError("tests.json must contain a list.")
     return data
@@ -37,7 +67,12 @@ def run_test(test: dict, namespace: dict) -> dict:
     name = test.get("name", "Unnamed test")
     code = test.get("code")
     if not isinstance(code, str):
-        return {"name": name, "passed": False, "error": "Test has no code.", "stdout": ""}
+        return {
+            "name": name,
+            "passed": False,
+            "error": "Test has no code.",
+            "stdout": "",
+        }
 
     stdout = io.StringIO()
     try:
