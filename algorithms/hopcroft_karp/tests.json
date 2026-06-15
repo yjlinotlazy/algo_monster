@@ -1,0 +1,26 @@
+[
+  {
+    "name": "single edge",
+    "code": "assert hopcroft_karp(1, 1, [(0, 0)]) == 1"
+  },
+  {
+    "name": "full matching (perfect)",
+    "code": "edges = [(0, 0), (1, 1)]\nassert hopcroft_karp(2, 2, edges) == 2"
+  },
+  {
+    "name": "no edges",
+    "code": "assert hopcroft_karp(3, 3, []) == 0"
+  },
+  {
+    "name": "competition for one right node",
+    "code": "edges = [(0, 0), (1, 0)]\nassert hopcroft_karp(2, 1, edges) == 1"
+  },
+  {
+    "name": "classic non-trivial case",
+    "code": "edges = [(0, 0), (0, 1), (1, 1), (2, 2), (3, 3)]\nassert hopcroft_karp(4, 4, edges) == 4"
+  },
+  {
+    "name": "star from one left node",
+    "code": "edges = [(0, 0), (0, 1), (0, 2)]\nassert hopcroft_karp(1, 3, edges) == 1"
+  }
+]

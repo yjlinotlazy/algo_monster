@@ -1,0 +1,26 @@
+[
+  {
+    "name": "DAG — each node is its own SCC",
+    "code": "adj = [[1], [2], []]\nresult = tarjan_scc(3, adj)\nassert all(len(scc) == 1 for scc in result)"
+  },
+  {
+    "name": "single cycle",
+    "code": "adj = [[1], [2], [0]]\nresult = tarjan_scc(3, adj)\nassert len(result) == 1\nassert sorted(result[0]) == [0, 1, 2]"
+  },
+  {
+    "name": "two disjoint cycles",
+    "code": "adj = [[1, 4], [0], [3], [2], [5], [4]]\nresult = tarjan_scc(6, adj)\nassert sorted(result) == sorted([[0, 1], [2, 3], [4, 5]])"
+  },
+  {
+    "name": "single node with self-loop",
+    "code": "adj = [[0]]\nresult = tarjan_scc(1, adj)\nassert len(result) == 1\nassert result[0] == [0]"
+  },
+  {
+    "name": "two nodes mutually reachable",
+    "code": "adj = [[1], [0]]\nresult = tarjan_scc(2, adj)\nassert len(result) == 1\nassert result[0] == [0, 1]"
+  },
+  {
+    "name": "empty graph (zero nodes)",
+    "code": "result = tarjan_scc(0, [])\nassert result == []"
+  }
+]

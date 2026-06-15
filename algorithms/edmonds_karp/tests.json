@@ -1,0 +1,26 @@
+[
+  {
+    "name": "single edge",
+    "code": "cap = [[0, 10], [0, 0]]\nassert edmonds_karp(cap, 0, 1) == 10"
+  },
+  {
+    "name": "two parallel paths with shared bottleneck",
+    "code": "n = 4\nINF = float('inf')\ncap = [[0]*n for _ in range(n)]\ncap[0][1] = 10\ncap[0][2] = 10\ncap[1][3] = 5\ncap[2][3] = 5\nassert edmonds_karp(cap, 0, 3) == 10"
+  },
+  {
+    "name": "linear chain",
+    "code": "cap = [[0]*4 for _ in range(4)]\ncap[0][1] = 8\ncap[1][2] = 5\ncap[2][3] = 10\nassert edmonds_karp(cap, 0, 3) == 5"
+  },
+  {
+    "name": "diamond with cross edge",
+    "code": "n = 4\ncap = [[0]*n for _ in range(n)]\ncap[0][1] = 16\ncap[0][2] = 13\ncap[1][2] = 10\ncap[1][3] = 12\ncap[2][1] = 4\ncap[2][3] = 20\nassert edmonds_karp(cap, 0, 3) == 23"
+  },
+  {
+    "name": "disconnected graph",
+    "code": "n = 3\ncap = [[0]*n for _ in range(n)]\ncap[0][1] = 5\nassert edmonds_karp(cap, 0, 2) == 0"
+  },
+  {
+    "name": "source equals sink",
+    "code": "cap = [[0], [0]]\nassert edmonds_karp(cap, 0, 0) == 0"
+  }
+]
