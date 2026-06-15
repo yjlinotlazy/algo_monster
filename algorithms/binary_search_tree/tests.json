@@ -14,5 +14,61 @@
   {
     "name": "keeps duplicates",
     "code": "tree = BinarySearchTree()\nfor value in [5, 3, 5, 3]:\n    tree.insert(value)\nassert tree.in_order() == [3, 3, 5, 5]"
+  },
+  {
+    "name": "single element tree",
+    "code": "tree = BinarySearchTree()\ntree.insert(42)\nassert tree.contains(42) is True\nassert tree.contains(41) is False\nassert tree.in_order() == [42]"
+  },
+  {
+    "name": "in-order on empty tree",
+    "code": "tree = BinarySearchTree()\nassert tree.in_order() == []"
+  },
+  {
+    "name": "contains root after single insert",
+    "code": "tree = BinarySearchTree()\ntree.insert(1)\nassert tree.contains(1) is True"
+  },
+  {
+    "name": "negative numbers",
+    "code": "tree = BinarySearchTree()\nfor value in [-5, -10, 0, -3, 5]:\n    tree.insert(value)\nassert tree.in_order() == [-10, -5, -3, 0, 5]\nassert tree.contains(-3) is True\nassert tree.contains(100) is False"
+  },
+  {
+    "name": "large values",
+    "code": "tree = BinarySearchTree()\nfor value in [1000000, 0, -1000000, 999999, 1]:\n    tree.insert(value)\nassert tree.in_order() == [-1000000, 0, 1, 999999, 1000000]"
+  },
+  {
+    "name": "all same value (degenerate)",
+    "code": "tree = BinarySearchTree()\nfor _ in range(10):\n    tree.insert(7)\nassert tree.contains(7) is True\nassert tree.in_order() == [7] * 10"
+  },
+  {
+    "name": "sorted sequence inserts (right-only degenerate)",
+    "code": "tree = BinarySearchTree()\nfor i in range(1, 11):\n    tree.insert(i)\nassert tree.in_order() == list(range(1, 11))\nassert tree.contains(1) is True\nassert tree.contains(10) is True\nassert tree.contains(5) is True"
+  },
+  {
+    "name": "reverse sorted sequence (left-only degenerate)",
+    "code": "tree = BinarySearchTree()\nfor i in range(10, 0, -1):\n    tree.insert(i)\nassert tree.in_order() == list(range(1, 11))\nassert tree.contains(1) is True\nassert tree.contains(10) is True"
+  },
+  {
+    "name": "only left subtree",
+    "code": "tree = BinarySearchTree()\ntree.insert(5)\ntree.insert(3)\ntree.insert(1)\nassert tree.in_order() == [1, 3, 5]\nassert tree.contains(5) is True\nassert tree.contains(3) is True"
+  },
+  {
+    "name": "only right subtree",
+    "code": "tree = BinarySearchTree()\ntree.insert(1)\ntree.insert(3)\ntree.insert(5)\nassert tree.in_order() == [1, 3, 5]\nassert tree.contains(1) is True\nassert tree.contains(5) is True"
+  },
+  {
+    "name": "multiple inserts of same root value",
+    "code": "tree = BinarySearchTree()\ntree.insert(10)\ntree.insert(10)\ntree.insert(10)\nassert tree.contains(10) is True\nassert tree.in_order() == [10, 10, 10]"
+  },
+  {
+    "name": "contains on empty tree returns False",
+    "code": "tree = BinarySearchTree()\nassert tree.contains(1) is False\nassert tree.contains(-999) is False\nassert tree.contains(999999) is False"
+  },
+  {
+    "name": "large mixed insertion preserves order",
+    "code": "tree = BinarySearchTree()\ndata = [50, 25, 75, 12, 37, 62, 87, 6, 18, 30, 44, 56, 68, 80, 94, 3, 10, 20, 33, 40]\nfor x in data:\n    tree.insert(x)\nassert tree.in_order() == sorted(data)\nassert tree.contains(50) is True\nassert tree.contains(6) is True\nassert tree.contains(94) is True"
+  },
+  {
+    "name": "search every inserted node",
+    "code": "tree = BinarySearchTree()\ndata = [10, 5, 15, 3, 7, 12, 18]\nfor x in data:\n    tree.insert(x)\nassert not tree.contains(1) and not tree.contains(4) and not tree.contains(999)\nfor x in data:\n    assert tree.contains(x) is True"
   }
 ]
