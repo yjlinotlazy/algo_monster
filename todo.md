@@ -67,3 +67,46 @@
   - run tests
   - view results
   - save solution and progress
+
+## MLE Monster
+
+- [ ] Create `mle/questions.json` with sample questions across categories.
+
+### Content
+
+- [ ] Create `mle/questions.json` with sample questions across categories
+  (`ML fundamentals`, `Deep learning`, `LLM / AI`, `Metrics / Evaluation`,
+  `Data`, `Productionization`, `Experimentation`).
+  Each question has `id`, `category`, `question`, and `reference_answer`.
+
+### Backend
+
+- [ ] Add LLM grading function that calls the configured provider:
+  - Ollama at `http://localhost:11434/v1` (default, uses qwen-large2)
+    Accepts any non-empty `OPENAI_API_KEY` value.
+  - OpenAI-compatible endpoint (custom URL via `OPENAI_BASE_URL`).
+  - Both use the same OpenAI chat completions format; provider choice is just
+    two env vars (`OPENAI_API_KEY`, `OPENAI_BASE_URL`) with Ollama defaults.
+- [ ] Add `GET /api/mle/questions` — returns questions grouped by category.
+- [ ] Add `GET /api/mle/questions/:id` — returns question + prior grading history.
+- [ ] Add `POST /api/mle/grade` — forwards user answer to LLM, parses
+  score (1-5) + feedback from response, saves progress automatically.
+- [ ] Add `PUT /api/mle/progress/:id` — updates status + score for a question.
+  (Reuses existing `save_progress()` + progress schema.)
+- [ ] Progress data is stored under the `"mle"` key in the existing
+  `~/.config/algo_monster/progress.json`.
+
+### Frontend
+
+- [ ] Add a toggle/tab between Algorithm and MLE modes in the top bar.
+- [ ] In MLE mode: render question list (grouped by category) in the sidebar.
+- [ ] In MLE mode: render answer input area + **Grade me** button in the
+  main content area.
+- [ ] Show grading result (score, feedback) and post-grading reveal of
+  `reference_answer` box below the input.
+- [ ] Wire up progress status control (same as algorithm mode).
+
+### Graceful degradation
+
+- [ ] If no LLM endpoint is reachable, grade returns `ok: false` with a visible
+  error explaining that grading is unavailable.

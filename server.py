@@ -11,6 +11,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -26,6 +28,12 @@ CONFIG_DIR = (
 SOLUTIONS_DIR = CONFIG_DIR / "solutions"
 PROGRESS_PATH = CONFIG_DIR / "progress.json"
 TIMEOUT_SECONDS = 3
+MLE_DIR = ROOT / "mle"
+MLE_QUESTIONS_PATH = MLE_DIR / "questions.json"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
+OPENAI_BASE_URL = os.environ.get(
+    "OPENAI_BASE_URL", "http://localhost:11434/v1"
+)
 
 
 def ensure_config() -> None:
@@ -219,6 +227,88 @@ def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
         }
 
 
+# ── MLE Grading ─────────────────────────────────────────────
+
+def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict:
+    """Forward the question + user answer to the configured LLM and parse score/feedback."""
+    system_prompt = (
+        "You are a grading assistant for ML interview questions. "
+        "Grade the candidate's answer on a scale of 1-5: "
+        "1=knows nothing, 2=partial understanding, 3=solid with gaps, "
+        "4=strong but missing detail, 5=excellent and comprehensive.\n"
+        "Respond ONLY with valid JSON of this shape: "
+        "{\"score\": <int 1-5>, \"feedback\": \"<text>\"}."
+    )
+    body = json.dumps(
+        {
+            "model": os.environ.get("OLLAMA_MODEL", "qwen-large2"),
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Question: {question_text}\n\n"
+                        f"Candidate's answer:\n{user_answer}"
+                    ),
+                },
+            ],
+        },
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        OPENAI_BASE_URL + "/chat/completions",
+        data=body,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_API_KEY}"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, OSError) as exc:
+        return {"ok": False, "error": f"LLM unavailable: {exc}"}
+    except (json.JSONDecodeError, KeyError, TypeError):
+        return {"ok": False, "error": "Unexpected LLM response format."}
+
+    content = raw.get("choices", [{}])[0].get("message", {}).get("content", "")
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError:
+        cleaned = content.strip()
+        for fence in ("```json\n", "```\n", "```"):
+            if cleaned.startswith(fence):
+                cleaned = cleaned[len(fence):]
+        try:
+            end_brace = cleaned.rfind("}")
+            parsed = json.loads(cleaned[: end_brace + 1])
+        except json.JSONDecodeError:
+            return {"ok": False, "error": "LLM did not return valid score/feedback."}
+
+    score = int(parsed.get("score", 0)) if isinstance(parsed.get("score"), (int, float)) else 0
+    feedback = str(parsed.get("feedback", "")) if parsed else ""
+    return {"ok": True, "score": max(1, min(score, 5)), "feedback": feedback}
+
+
+def load_mle_questions() -> list[dict]:
+    """Load bundled MLE questions; returns empty list on missing/bad file."""
+    return load_json(MLE_QUESTIONS_PATH, [])
+
+
+def group_questions_by_category(questions: list[dict]) -> dict[str, list[dict]]:
+    """Return a dict mapping category → list of question objects."""
+    groups: dict[str, list[dict]] = {}
+    for q in questions:
+        cat = q.get("category", "Uncategorized")
+        groups.setdefault(cat, []).append(q)
+    return groups
+
+
+def find_question(questions: list[dict], question_id: str) -> dict | None:
+    """Return the matching question or None."""
+    for q in questions:
+        if q.get("id") == question_id:
+            return q
+    return None
+
+
 class Handler(BaseHTTPRequestHandler):
     """HTTP request handler — serves static files and exposes /api/ endpoints."""
 
@@ -280,6 +370,22 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(payload)
             return
 
+        # ── MLE endpoints ──
+        if path == "/api/mle/questions":
+            questions = load_mle_questions()
+            self.send_json({"questions": group_questions_by_category(questions)})
+            return
+
+        if path.startswith("/api/mle/questions/"):
+            question_id = path.removeprefix("/api/mle/questions/")
+            questions = load_mle_questions()
+            q = find_question(questions, question_id)
+            if not q:
+                self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
+                return
+            progress = load_progress().get("mle", {}).get(question_id, {})
+            self.send_json({**q, "progress": progress})
+            return
         self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
 
     def handle_api_put(self, path: str) -> None:
@@ -318,12 +424,68 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"ok": True, "progress": current})
             return
 
-        self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
+        # ── MLE progress update ──
+        if path.startswith("/api/mle/progress/"):
+            question_id = path.removeprefix("/api/mle/progress/")
+            status = body.get("status")
+            if not isinstance(status, str):
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected field: status."
+                )
+                return
+            progress = load_progress()
+            mle = progress.setdefault("mle", {})
+            entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+            entry["status"] = status
+            score_val = body.get("score")
+            if isinstance(score_val, (int, float)):
+                entry["score"] = int(score_val)
+                # Auto-advance: score >= 4 → learned
+                if int(score_val) >= 4 and status not in ("to learn",):
+                    entry["status"] = "learned"
+            else:
+                entry["score"] = None
+            mle[question_id] = entry
+            progress["mle"] = mle
+            save_progress(progress)
+            self.send_json({"ok": True, "progress": entry})
+            return
 
     def handle_api_post(self, path: str) -> None:
-        if path != "/api/run":
-            self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
+        # ── MLE grading ──
+        if path == "/api/mle/grade":
+            body = self.read_body()
+            question_id = body.get("question_id") or ""
+            answer = body.get("answer", "")
+            if not isinstance(question_id, str) or not isinstance(answer, str):
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected question_id and answer."
+                )
+                return
+            questions = load_mle_questions()
+            q = find_question(questions, question_id)
+            if not q:
+                self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
+                return
+            result = grade_answer(question_id, q["question"], answer)
+            # Persist progress on successful grading
+            if result.get("ok") and isinstance(result.get("score"), int):
+                prog_progress = load_progress()
+                mle = prog_progress.setdefault("mle", {})
+                entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+                entry["score"] = result["score"]
+                from datetime import datetime, timezone
+                entry["graded_at"] = datetime.now(timezone.utc).isoformat()
+                if result["score"] >= 4:
+                    entry["status"] = "learned"
+                else:
+                    entry.setdefault("status", "learning")
+                mle[question_id] = entry
+                prog_progress["mle"] = mle
+                save_progress(prog_progress)
+            self.send_json(result)
             return
+        if path != "/api/run":
 
         body = self.read_body()
         algo_id = body.get("algorithm_id")

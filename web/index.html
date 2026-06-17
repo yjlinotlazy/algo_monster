@@ -17,6 +17,7 @@
           <input id="search" type="search" placeholder="Search algorithms" autocomplete="off">
         </div>
         <nav id="algorithm-list" class="algorithm-list" aria-label="Algorithms"></nav>
+        <nav id="mle-question-list" class="algorithm-list mle-questions hidden" aria-label="MLE Questions"></nav>
       </aside>
 
       <main class="workspace">
@@ -34,8 +35,8 @@
                 <option value="learned">learned</option>
               </select>
             </label>
+            <button id="mode-toggle-btn" type="button">MLE</button>
             <button id="save-btn" type="button">Save</button>
-            <button id="run-btn" type="button" class="primary">Run all</button>
           </div>
         </header>
 
@@ -51,7 +52,6 @@
             </div>
             <textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
           </section>
-
           <section class="tests-panel" aria-label="Tests">
             <div class="panel-header">
               <span>Tests</span>
