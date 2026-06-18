@@ -1,0 +1,54 @@
+[
+  {
+    "name": "empty graph — each node isolated",
+    "code": "result = connected_components(3, [])\nassert len(result) == 3\nfor comp in result:\n    assert len(comp) == 1"
+  },
+  {
+    "name": "single edge — two nodes connected",
+    "code": "result = connected_components(2, [(0, 1)])\nassert result == [[0, 1]]"
+  },
+  {
+    "name": "chain of edges — all one component",
+    "code": "edges = [(i, i + 1) for i in range(9)]\nresult = connected_components(10, edges)\nassert result == [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]"
+  },
+  {
+    "name": "disjoint edges — multiple components",
+    "code": "result = connected_components(6, [(0, 1), (2, 3), (4, 5)])\nassert result == [[0, 1], [2, 3], [4, 5]]"
+  },
+  {
+    "name": "single node graph",
+    "code": "result = connected_components(1, [])\nassert result == [[0]]"
+  },
+  {
+    "name": "star graph — all connected",
+    "code": "edges = [(0, i) for i in range(1, 6)]\nresult = connected_components(6, edges)\nassert len(result) == 1\nassert set(result[0]) == set(range(6))"
+  },
+  {
+    "name": "cycle in undirected graph",
+    "code": "edges = [(0, 1), (1, 2), (2, 3), (3, 0)]\nresult = connected_components(4, edges)\nassert result == [[0, 1, 2, 3]]"
+  },
+  {
+    "name": "graph with isolated nodes",
+    "code": "edges = [(0, 1), (1, 2)]\nresult = connected_components(5, edges)\nassert set(frozenset(c) for c in result) == {frozenset({0,1,2}), frozenset({3}), frozenset({4})}"
+  },
+  {
+    "name": "duplicate edge ignored",
+    "code": "result = connected_components(3, [(0, 1), (0, 1), (1, 2)])\nassert result == [[0, 1, 2]]"
+  },
+  {
+    "name": "reversed edges — undirected",
+    "code": "result = connected_components(4, [(3, 2), (1, 0), (0, 2)])\nassert result == [[0, 1, 2, 3]]"
+  },
+  {
+    "name": "complete graph K₄ — one component",
+    "code": "edges = [(i, j) for i in range(4) for j in range(i + 1, 4)]\nresult = connected_components(4, edges)\nassert result == [[0, 1, 2, 3]]"
+  },
+  {
+    "name": "two cliques connected by single edge",
+    "code": "edges = [(i, j) for i in range(5) for j in range(i + 1, 5)] + [(4, 5), (5, 6), (6, 7), (7, 8)]\nresult = connected_components(9, edges)\nassert len(result) == 1\nassert set(result[0]) == set(range(9))"
+  },
+  {
+    "name": "large disconnected graph — stress test",
+    "code": "import random\nrandom.seed(77)\nn = 500\nedges = []\nfor _ in range(1000):\n    a, b = random.randint(0, n-1), random.randint(0, n-1)\n    edges.append((a, b))\nresult = connected_components(n, edges)\n# Just verify every node appears exactly once\nall_nodes = sorted([node for comp in result for node in comp])\nassert all_nodes == list(range(n))"
+  }
+]

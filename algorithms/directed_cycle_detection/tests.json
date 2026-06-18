@@ -1,0 +1,62 @@
+[
+  {
+    "name": "empty graph — no cycle",
+    "code": "assert has_cycle({}) == False"
+  },
+  {
+    "name": "single node no edges — no cycle",
+    "code": "assert has_cycle({0: []}) == False"
+  },
+  {
+    "name": "two-node cycle",
+    "code": "assert has_cycle({0: [1], 1: [0]}) == True"
+  },
+  {
+    "name": "self-loop",
+    "code": "assert has_cycle({0: [0], 1: []}) == True"
+  },
+  {
+    "name": "three-node cycle in chain",
+    "code": "assert has_cycle({0: [1], 1: [2], 2: [0]}) == True"
+  },
+  {
+    "name": "simple DAG — no cycle",
+    "code": "assert has_cycle({0: [1, 2], 1: [3], 2: [3], 3: []}) == False"
+  },
+  {
+    "name": "long acyclic chain — no cycle",
+    "code": "graph = {}\nfor i in range(100):\n    graph[i] = [i + 1]\ngraph[99] = []\nassert has_cycle(graph) == False"
+  },
+  {
+    "name": "disconnected components — one cycle",
+    "code": "graph = {0: [1], 1: [], 2: [3], 3: [2]}\nassert has_cycle(graph) == True"
+  },
+  {
+    "name": "disconnected DAG components — no cycle",
+    "code": "graph = {0: [], 1: [], 2: [3], 3: []}\nassert has_cycle(graph) == False"
+  },
+  {
+    "name": "complex DAG with multiple paths to same node",
+    "code": "graph = {\n  0: [1, 2],\n  1: [3],\n  2: [3],\n  3: [4],\n  4: []\n}\nassert has_cycle(graph) == False"
+  },
+  {
+    "name": "cycle at end of long chain",
+    "code": "graph = {}\nfor i in range(50):\n    graph[i] = [i + 1]\ngraph[50] = [49]\nassert has_cycle(graph) == True"
+  },
+  {
+    "name": "node appearing only as neighbour — no cycle",
+    "code": "assert has_cycle({0: [5], 1: []}) == False"
+  },
+  {
+    "name": "multiple cycles in different parts",
+    "code": "graph = {0: [1], 1: [2], 2: [0], 3: [4], 4: [3]}\nassert has_cycle(graph) == True"
+  },
+  {
+    "name": "star graph — no cycle (outgoing only)",
+    "code": "graph = {0: [1, 2, 3, 4, 5], 1: [], 2: [], 3: [], 4: [], 5: []}\nassert has_cycle(graph) == False"
+  },
+  {
+    "name": "large graph — no cycle (stress test)",
+    "code": "import random\nrandom.seed(99)\nn = 200\ngraph = {}\nfor i in range(n):\n    edges = []\n    for j in range(i + 1, min(i + 10, n)):\n        if random.random() < 0.3:\n            edges.append(j)\n    graph[i] = edges\nassert has_cycle(graph) == False"
+  }
+]

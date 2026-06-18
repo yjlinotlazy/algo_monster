@@ -1,0 +1,58 @@
+[
+  {
+    "name": "simple DAG — linear chain",
+    "code": "graph = {0: [1], 1: [2], 2: [3], 3: []}\nresult = topological_sort(graph)\nassert result is not None\nassert len(result) == 4\nassert result.index(0) < result.index(1) < result.index(2) < result.index(3)"
+  },
+  {
+    "name": "DAG with branching",
+    "code": "graph = {0: [1, 2], 1: [3], 2: [3], 3: []}\nresult = topological_sort(graph)\nassert result is not None\nassert len(result) == 4\nassert result.index(0) < result.index(1)\nassert result.index(0) < result.index(2)\nassert result.index(1) < result.index(3)\nassert result.index(2) < result.index(3)"
+  },
+  {
+    "name": "graph with isolated node",
+    "code": "graph = {0: [1], 1: [], 2: []}\nresult = topological_sort(graph)\nassert result is not None\nassert len(result) == 3\nassert set(result) == {0, 1, 2}"
+  },
+  {
+    "name": "single node no edges",
+    "code": "graph = {0: []}\nresult = topological_sort(graph)\nassert result is not None\nassert result == [0]"
+  },
+  {
+    "name": "empty graph",
+    "code": "graph = {}\nresult = topological_sort(graph)\nassert result == []"
+  },
+  {
+    "name": "two-node cycle detected — returns None",
+    "code": "graph = {0: [1], 1: [0]}\nassert topological_sort(graph) is None"
+  },
+  {
+    "name": "self-loop detected — returns None",
+    "code": "graph = {0: [0], 1: []}\nassert topological_sort(graph) is None"
+  },
+  {
+    "name": "three-node cycle detected — returns None",
+    "code": "graph = {0: [1], 1: [2], 2: [0]}\nassert topological_sort(graph) is None"
+  },
+  {
+    "name": "larger DAG — valid ordering respected",
+    "code": "edges = [(0,1),(0,2),(1,3),(1,4),(2,5),(3,6),(3,7),(4,7),(5,8),(6,9),(7,10),(8,10)]\ngraph = {}\nfor u, v in edges:\n    graph.setdefault(u, []).append(v)\n    graph.setdefault(v, [])\norder = topological_sort(graph)\nassert order is not None\npos = {node: i for i, node in enumerate(order)}\nfor u, v in edges:\n    assert pos[u] < pos[v], f'{u} should come before {v}'"
+  },
+  {
+    "name": "diamond-shaped DAG — all orderings valid",
+    "code": "graph = {0: [1, 2], 1: [3], 2: [3]}\nresult = topological_sort(graph)\nassert result is not None\nassert len(result) == 4\nassert set(result) == {0, 1, 2, 3}\nassert result.index(0) < result.index(3)"
+  },
+  {
+    "name": "multiple sources — deterministic tie-breaking by ID",
+    "code": "graph = {0: [4], 1: [], 2: [], 3: []}\nresult = topological_sort(graph)\nassert result is not None\nassert len(result) == 5\nassert set(result) == {0, 1, 2, 3, 4}"
+  },
+  {
+    "name": "graph with neighbor-only nodes (not keys)",
+    "code": "graph = {0: [5, 6], 1: [7], 8: []}\nresult = topological_sort(graph)\nassert result is not None\nexpected = {0, 1, 5, 6, 7, 8}\nassert set(result) == expected"
+  },
+  {
+    "name": "wide fan-out from single source",
+    "code": "graph = {0: [1,2,3,4,5], 1:[], 2:[], 3:[], 4:[], 5:[]}\nresult = topological_sort(graph)\nassert result is not None\nassert result[0] == 0\nassert set(result) == {0,1,2,3,4,5}"
+  },
+  {
+    "name": "long chain with cycle injected — detects it",
+    "code": "graph = {}\nfor i in range(100):\n    graph[i] = [i + 1]\ngraph[99].append(0)\nassert topological_sort(graph) is None"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "name": "single edge — bipartite",
+    "code": "assert is_bipartite(2, [(0, 1)]) == True"
+  },
+  {
+    "name": "path of length 3 — bipartite",
+    "code": "assert is_bipartite(4, [(0, 1), (1, 2), (2, 3)]) == True"
+  },
+  {
+    "name": "cycle of length 4 — bipartite",
+    "code": "assert is_bipartite(4, [(0, 1), (1, 2), (2, 3), (3, 0)]) == True"
+  },
+  {
+    "name": "star graph — bipartite",
+    "code": "edges = [(0, i) for i in range(1, 6)]\nassert is_bipartite(6, edges) == True"
+  },
+  {
+    "name": "odd cycle (triangle) — not bipartite",
+    "code": "assert is_bipartite(3, [(0, 1), (1, 2), (2, 0)]) == False"
+  },
+  {
+    "name": "odd cycle of length 5 — not bipartite",
+    "code": "edges = [(i, (i + 1) % 5) for i in range(5)]\nassert is_bipartite(5, edges) == False"
+  },
+  {
+    "name": "disconnected: one component bipartite, one not",
+    "code": "edges = [(0, 1), (1, 2), (2, 3)] + [(4, 5), (5, 6), (6, 4)]\nassert is_bipartite(7, edges) == False"
+  },
+  {
+    "name": "empty graph — trivially bipartite",
+    "code": "assert is_bipartite(3, []) == True"
+  },
+  {
+    "name": "K₄ — not bipartite (contains triangles)",
+    "code": "edges = [(i, j) for i in range(4) for j in range(i + 1, 4)]\nassert is_bipartite(4, edges) == False"
+  },
+  {
+    "name": "K₂,₃ (complete bipartite) — bipartite",
+    "code": "edges = [(i, j + 2) for i in range(2) for j in range(3)]\nassert is_bipartite(5, edges) == True"
+  },
+  {
+    "name": "large even cycle — bipartite",
+    "code": "edges = [(i, (i + 1) % 100) for i in range(100)]\nassert is_bipartite(100, edges) == True"
+  },
+  {
+    "name": "self-loop — not bipartite",
+    "code": "assert is_bipartite(2, [(0, 0)]) == False"
+  },
+  {
+    "name": "double edge between same nodes — still valid",
+    "code": "assert is_bipartite(3, [(0, 1), (0, 1), (1, 2)]) == True"
+  },
+  {
+    "name": "stress test: large random graph with known bipartition",
+    "code": "edges = []\nfor a in range(50):\n    for b in range(50, 100):\n        edges.append((a, b))\nassert is_bipartite(100, edges) == True"
+  }
+]

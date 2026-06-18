@@ -1,0 +1,58 @@
+[
+  {
+    "name": "push and pop preserves min-heap order",
+    "code": "h = MinHeap()\nh.push(3)\nh.push(1)\nh.push(2)\nassert h.pop() == 1\nassert h.pop() == 2\nassert h.pop() == 3"
+  },
+  {
+    "name": "multiple interleaved pushes and pops",
+    "code": "h = MinHeap()\nh.push(5)\nh.push(3)\nassert h.peek() == 3\nh.push(4)\nassert h.pop() == 3\nassert h.pop() == 4\nassert h.pop() == 5"
+  },
+  {
+    "name": "push in sorted order — pop yields sorted sequence",
+    "code": "h = MinHeap()\nfor i in range(1, 11):\n    h.push(i)\nassert [h.pop() for _ in range(10)] == list(range(1, 11))"
+  },
+  {
+    "name": "push in reverse sorted order — pop yields sorted sequence",
+    "code": "h = MinHeap()\nfor i in range(10, 0, -1):\n    h.push(i)\nassert [h.pop() for _ in range(10)] == list(range(1, 11))"
+  },
+  {
+    "name": "peek does not remove element",
+    "code": "h = MinHeap()\nh.push(42)\nassert h.peek() == 42\nassert h.peek() == 42\nassert len(h._data) == 1"
+  },
+  {
+    "name": "single push and pop",
+    "code": "h = MinHeap()\nh.push(7)\nassert h.pop() == 7\nassert h.is_empty()"
+  },
+  {
+    "name": "pop from empty heap raises IndexError",
+    "code": "h = MinHeap()\ntry:\n    h.pop()\n    assert False, 'expected IndexError'\nexcept IndexError:\n    pass"
+  },
+  {
+    "name": "peek from empty heap raises IndexError",
+    "code": "h = MinHeap()\ntry:\n    h.peek()\n    assert False, 'expected IndexError'\nexcept IndexError:\n    pass"
+  },
+  {
+    "name": "is_empty reports correct status",
+    "code": "h = MinHeap()\nassert h.is_empty() == True\nh.push(1)\nassert h.is_empty() == False\nh.pop()\nassert h.is_empty() == True"
+  },
+  {
+    "name": "duplicate values are handled correctly",
+    "code": "h = MinHeap()\nh.push(3)\nh.push(1)\nh.push(1)\nh.push(3)\nh.push(2)\nassert [h.pop() for _ in range(5)] == [1, 1, 2, 3, 3]"
+  },
+  {
+    "name": "negative and positive mix",
+    "code": "h = MinHeap()\nh.push(-5)\nh.push(0)\nh.push(3)\nh.push(-10)\nh.push(7)\nassert [h.pop() for _ in range(5)] == [-10, -5, 0, 3, 7]"
+  },
+  {
+    "name": "large dataset — pop yields sorted output",
+    "code": "import random\nrandom.seed(42)\nh = MinHeap()\ndata = [random.randint(-1000, 1000) for _ in range(500)]\nfor v in data:\n    h.push(v)\nassert [h.pop() for _ in range(500)] == sorted(data)"
+  },
+  {
+    "name": "partial push-pop interleaving",
+    "code": "h = MinHeap()\nh.push(10)\nh.push(20)\nh.push(5)\nassert h.pop() == 5\nh.push(1)\nh.push(15)\nassert h.pop() == 1\nassert h.pop() == 10\nassert h.pop() == 15\nassert h.pop() == 20"
+  },
+  {
+    "name": "equal values don't break heap property",
+    "code": "h = MinHeap()\nfor _ in range(100):\n    h.push(42)\nwhile not h.is_empty():\n    assert h.pop() == 42"
+  }
+]
