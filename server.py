@@ -485,41 +485,46 @@ class Handler(BaseHTTPRequestHandler):
                 save_progress(prog_progress)
             self.send_json(result)
             return
-        if path != "/api/run":
+        elif path == "/api/run":
+            body = self.read_body()
+            algo_id = body.get("algorithm_id")
+            code = body.get("code")
+            test_index = body.get("test_index")
+            if not isinstance(algo_id, str) or not isinstance(code, str):
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code."
+                )
+                return
+            try:
+                algo_id = safe_algorithm_id(algo_id)
+            except KeyError:
+                self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown algorithm.")
+                return
+            if test_index is not None and not isinstance(test_index, int):
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "test_index must be an integer."
+                )
+                return
 
-        body = self.read_body()
-        algo_id = body.get("algorithm_id")
-        code = body.get("code")
-        test_index = body.get("test_index")
-        if not isinstance(algo_id, str) or not isinstance(code, str):
-            self.send_error_json(
-                HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code."
-            )
-            return
-        try:
-            algo_id = safe_algorithm_id(algo_id)
-        except KeyError:
-            self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown algorithm.")
-            return
-        if test_index is not None and not isinstance(test_index, int):
-            self.send_error_json(
-                HTTPStatus.BAD_REQUEST, "test_index must be an integer."
-            )
-            return
-
-        result = run_tests(algo_id, code, test_index)
-        if test_index is None:
-            progress = load_progress()
-            current = progress.get(algo_id, {})
-            current["passing"] = bool(result.get("ok"))
-            # Auto-save solution when all tests pass (run all)
-            if result.get("ok"):
-                save_solution(algo_id, code)
-            progress[algo_id] = current
-            save_progress(progress)
-        self.send_json(result)
+            result = run_tests(algo_id, code, test_index)
+            if test_index is None:
+                progress = load_progress()
+                current = progress.get(algo_id, {})
+                current["passing"] = bool(result.get("ok"))
+                # Auto-save solution when all tests pass (run all)
+                if result.get("ok"):
+                    save_solution(algo_id, code)
+                progress[algo_id] = current
+                save_progress(progress)
+            self.send_json(result)
 
     def serve_static(self, path: str) -> None:
+        # Route /algo and /mle to their product directories.
+        if path == "/algo":
+            path = "/algo_monster/index.html"
+        elif path == "/mle":
+            path = "/mle_monster/index.html"
+
         if path == "/":
             file_path = STATIC_DIR / "index.html"
         else:
