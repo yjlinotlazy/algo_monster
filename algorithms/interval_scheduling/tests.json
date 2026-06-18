@@ -1,0 +1,42 @@
+[
+  {
+    "name": "empty list",
+    "code": "result = interval_scheduling([])\nassert result == 0"
+  },
+  {
+    "name": "single interval",
+    "code": "result = interval_scheduling([(1, 4)])\nassert result == 1"
+  },
+  {
+    "name": "two non-overlapping intervals",
+    "code": "result = interval_scheduling([(1, 2), (3, 4)])\nassert result == 2"
+  },
+  {
+    "name": "two overlapping intervals",
+    "code": "result = interval_scheduling([(1, 4), (2, 5)])\nassert result == 1"
+  },
+  {
+    "name": "classic greedy example — sort by finish time",
+    "code": "intervals = [(1, 3), (2, 4), (3, 6), (5, 7), (6, 8), (5, 9)]\nresult = interval_scheduling(intervals)\nassert result == 3"
+  },
+  {
+    "name": "adjacent intervals are compatible",
+    "code": "intervals = [(1, 2), (2, 3), (3, 4), (4, 5)]\nresult = interval_scheduling(intervals)\nassert result == 4"
+  },
+  {
+    "name": "all intervals overlap",
+    "code": "intervals = [(1, 10), (2, 9), (3, 8), (4, 7)]\nresult = interval_scheduling(intervals)\nassert result == 1"
+  },
+  {
+    "name": "nested intervals",
+    "code": "intervals = [(1, 10), (2, 5), (3, 4), (6, 9)]\nresult = interval_scheduling(intervals)\nassert result == 3"
+  },
+  {
+    "name": "many intervals — greedy picks optimal",
+    "code": "intervals = [(0, 6), (1, 4), (3, 5), (3, 6), (5, 7), (5, 9), (6, 8), (7, 9), (8, 10)]\nresult = interval_scheduling(intervals)\nassert result == 4"
+  },
+  {
+    "name": "large input with scattered intervals",
+    "code": "intervals = [(i, i+2) for i in range(1000)]\nresult = interval_scheduling(intervals)\nassert result == 500"
+  }
+]

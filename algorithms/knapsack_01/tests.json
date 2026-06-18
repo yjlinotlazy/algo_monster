@@ -1,0 +1,42 @@
+[
+  {
+    "name": "empty items",
+    "code": "result = knapsack_01(5, [], [])\nassert result == 0"
+  },
+  {
+    "name": "zero capacity",
+    "code": "result = knapsack_01(0, [2, 3], [4, 5])\nassert result == 0"
+  },
+  {
+    "name": "classic example — values [6,10,12], weights [1,2,3], capacity 5",
+    "code": "result = knapsack_01(5, [1, 2, 3], [6, 10, 12])\nassert result == 22"
+  },
+  {
+    "name": "single item fits",
+    "code": "result = knapsack_01(10, [5], [7])\nassert result == 7"
+  },
+  {
+    "name": "single item too heavy",
+    "code": "result = knapsack_01(3, [5], [7])\nassert result == 0"
+  },
+  {
+    "name": "one item fits better than another",
+    "code": "result = knapsack_01(50, [10, 20, 30], [60, 100, 120])\nassert result == 220"
+  },
+  {
+    "name": "equal weight/value ratio — value density matters",
+    "code": "result = knapsack_01(5, [3, 4, 5], [30, 40, 50])\nassert result == 70"
+  },
+  {
+    "name": "all items fit exactly",
+    "code": "result = knapsack_01(6, [2, 3, 1], [10, 20, 30])\nassert result == 60"
+  },
+  {
+    "name": "knapsack where greedy would fail — DP needed",
+    "code": "result = knapsack_01(5, [3, 4, 3], [20, 30, 25])\nassert result == 45"
+  },
+  {
+    "name": "large capacity with multiple items",
+    "code": "result = knapsack_01(100, [10, 20, 30, 40], [60, 100, 120, 150])\nassert result == 330"
+  }
+]

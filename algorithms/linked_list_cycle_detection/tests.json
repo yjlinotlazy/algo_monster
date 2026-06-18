@@ -1,0 +1,42 @@
+[
+  {
+    "name": "empty list",
+    "code": "result = detect_cycle(None)\nassert result is None"
+  },
+  {
+    "name": "single node, no cycle",
+    "code": "head = ListNode(1)\nresult = detect_cycle(head)\nassert result is None"
+  },
+  {
+    "name": "single node, self-loop cycle",
+    "code": "head = ListNode(1)\nhead.next = head\nresult = detect_cycle(head)\nassert result == 0"
+  },
+  {
+    "name": "two-node cycle",
+    "code": "a = ListNode(1)\nb = ListNode(2)\na.next = b\nb.next = a\nresult = detect_cycle(a)\nassert result == 0"
+  },
+  {
+    "name": "cycle starting at second node",
+    "code": "a = ListNode(1)\nb = ListNode(2)\nc = ListNode(3)\na.next = b\nb.next = c\nc.next = b\nresult = detect_cycle(a)\nassert result == 1"
+  },
+  {
+    "name": "no cycle on three-node list",
+    "code": "a = ListNode(1)\nb = ListNode(2)\nc = ListNode(3)\na.next = b\nb.next = c\nc.next = None\nresult = detect_cycle(a)\nassert result is None"
+  },
+  {
+    "name": "large tail-to-head cycle",
+    "code": "nodes = [ListNode(i) for i in range(100)]\nfor i in range(99):\n    nodes[i].next = nodes[i+1]\nnodes[99].next = nodes[0]\nresult = detect_cycle(nodes[0])\nassert result == 0"
+  },
+  {
+    "name": "cycle in middle of long list",
+    "code": "nodes = [ListNode(i) for i in range(100)]\nfor i in range(99):\n    nodes[i].next = nodes[i+1]\nnodes[50].next = nodes[25]\nresult = detect_cycle(nodes[0])\nassert result == 25"
+  },
+  {
+    "name": "two-node tail with self-loop",
+    "code": "a = ListNode(1)\nb = ListNode(2)\na.next = b\nb.next = b\nresult = detect_cycle(a)\nassert result == 1"
+  },
+  {
+    "name": "long chain then loop at index 3",
+    "code": "nodes = [ListNode(i) for i in range(50)]\nfor i in range(49):\n    nodes[i].next = nodes[i+1]\nnodes[49].next = nodes[3]\nresult = detect_cycle(nodes[0])\nassert result == 3"
+  }
+]
