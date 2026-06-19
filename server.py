@@ -28,6 +28,7 @@ CONFIG_DIR = (
 SOLUTIONS_DIR = CONFIG_DIR / "solutions"
 PROGRESS_PATH = CONFIG_DIR / "progress.json"
 TIMEOUT_SECONDS = 3
+MLE_TIMEOUT_SECONDS = int(os.environ.get("MLE_LLM_TIMEOUT", "180"))
 MLE_DIR = ROOT / "mle"
 MLE_CATEGORIES_PATH = MLE_DIR / "categories.json"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
@@ -261,7 +262,7 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=MLE_TIMEOUT_SECONDS) as resp:
             raw = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
