@@ -70,14 +70,15 @@
 
 ## MLE Monster
 
-- [ ] Create `mle/questions.json` with sample questions across categories.
+- [x] Create `mle/categories.json` with sample questions grouped by category.
 
 ### Content
 
-- [ ] Create `mle/questions.json` with sample questions across categories
+- [x] Create `mle/categories.json` with sample questions grouped by category
   (`ML fundamentals`, `Deep learning`, `LLM / AI`, `Metrics / Evaluation`,
   `Data`, `Productionization`, `Experimentation`).
-  Each question has `id`, `category`, `question`, and `reference_answer`.
+  Each question has `id`, `question`, and `reference_answer`; category is the
+  top-level key.
 
 ### Backend
 
@@ -105,6 +106,21 @@
 - [ ] Show grading result (score, feedback) and post-grading reveal of
   `reference_answer` box below the input.
 - [ ] Wire up progress status control (same as algorithm mode).
+
+### Current MLE page bugs / requirements
+
+- [x] Fix `/mle` so questions visibly populate from `mle/categories.json`.
+- [x] Verify `GET /api/mle/questions` returns the response shape the frontend
+  consumes: `{ "categories": { "<category>": [questions...] } }`.
+- [x] Render desktop MLE as three visible panels:
+  - left sidebar: category/question tree only
+  - middle panel: selected question, user answer textarea, Grade me, status/reset
+  - right sidebar: LLM score/feedback and reference/interview answer
+- [x] Ensure answer editor and LLM results are not squeezed into the left sidebar.
+- [x] Add a browser/manual verification step for `http://127.0.0.1:8001/mle`
+  since that is the existing local server port.
+- [x] After fixing, hard-refresh or cache-bust static assets if the browser is
+  still using stale CSS/JS.
 
 ### Graceful degradation
 

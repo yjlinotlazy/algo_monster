@@ -141,21 +141,32 @@ Initial directory structure:
 
 ```text
 mle/
-  questions.json
+  categories.json
 ```
 
-#### `questions.json`
+#### `categories.json`
 
-An array of interview question objects:
+A category-keyed object whose values are arrays of interview question objects:
+
+```json
+{
+  "ML fundamentals": [
+    {
+      "id": "ml_fundamentals_overfitting",
+      "question": "What is overfitting?",
+      "reference_answer": "Overfitting occurs when..."
+    }
+  ]
+}
+```
 
 - `id`: stable identifier, such as `ml_fundamentals_overfitting`  
-- `category`: one of `ML fundamentals`, `Deep learning`, `LLM / AI`,
-  `Metrics / Evaluation`, `Data`, `Productionization`, `Experimentation`  
 - `question`: the interview question the user sees  
 - `reference_answer`: a model answer revealed after grading, used as a
   reference for self-review (not fed to the LLM)  
 
-The backend returns questions grouped by category.
+The category is implied by the top-level key. The backend includes `category`
+in API responses for convenience.
 
 ### Grading Flow
 
@@ -210,10 +221,12 @@ Returns questions grouped by category:
 
 ```json
 {
-  "ML fundamentals": [
-    { "id": "ml_fundamentals_overfitting", "category": "ML fundamentals",
-      "question": "What is overfitting?" }
-  ]
+  "categories": {
+    "ML fundamentals": [
+      { "id": "ml_fundamentals_overfitting", "category": "ML fundamentals",
+        "question": "What is overfitting?" }
+    ]
+  }
 }
 ```
 
@@ -259,11 +272,41 @@ on grading. User can set status to `to learn` to reset.
 
 ### UI Layout
 
-The app has two modes, toggled by a tab or header control:
+The app has two product entry points from the landing page:
 
-1. **Algorithm** mode — current layout (algorithm list sidebar + 4-panel grid).
-2. **MLE** mode — question list sidebar + single answer input area below,
-   with grading result and reference answer shown afterward.
+1. **Algorithm Monster** — current algorithm practice layout.
+2. **MLE Monster** — interview question practice layout at `/mle`.
+
+MLE Monster must render as a three-panel workspace on desktop:
+
+1. **Left sidebar: question tree**
+   - Shows MLE questions from `mle/categories.json`.
+   - Questions are grouped under category headings.
+   - Category headings can be expanded/collapsed.
+   - Selecting a question loads that question into the middle panel.
+   - The sidebar must not contain the answer editor or LLM feedback.
+2. **Middle panel: user answer**
+   - Shows the selected category and selected question.
+   - Contains the user's free-text answer textarea.
+   - Contains the **Grade me** button.
+   - Contains status/reset controls for the selected question.
+3. **Right sidebar: LLM answer**
+   - Shows the LLM grading result: score and feedback.
+   - Shows the reference/interview answer after grading.
+   - Uses the configured local Ollama-compatible endpoint by default.
+
+On narrow screens the three panels may stack vertically, but the content
+ownership remains the same: question navigation first, user answer second,
+LLM/reference answer third.
+
+Known MLE UI bugs to guard against:
+
+- The left question tree must be populated from `GET /api/mle/questions`; an
+  empty sidebar is a bug when `mle/categories.json` has questions.
+- The desktop layout must visibly show three separate panels. If answer or LLM
+  content is squeezed into the left sidebar, the layout is broken.
+- The frontend and backend must agree on the response shape for
+  `/api/mle/questions`; currently the canonical shape is `{ "categories": ... }`.
 
 ### Boundaries (updated)
 

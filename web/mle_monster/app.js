@@ -1,14 +1,13 @@
 // ── State & DOM refs ───────────────────────────────────────────────
 const state = {
+  /** @type {Record<string, Array<{id: string, question: string, reference_answer?: string}>>} */
   categories: {},
-  questions: [],
   selectedId: null,
   selected: null,
 };
 
 const els = {
-  categoryNav: document.querySelector("#category-nav"),
-  questionList: document.querySelector("#question-list"),
+  categoryTree: document.querySelector("#category-tree"),
   title: document.querySelector("#title"),
   category: document.querySelector("#category"),
   questionText: document.querySelector("#question-text"),
@@ -21,10 +20,12 @@ const els = {
   resetBtn: document.querySelector("#reset-btn"),
 };
 
+const _expanded = new Set();
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 function escapeHtml(value) {
-  return value
+  return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -47,63 +48,128 @@ async function api(path, options = {}) {
 
 async function loadQuestions() {
   const data = await api("/api/mle/questions");
-  state.categories = data.questions;
-  // Flatten for quick lookup
-  state.questions = Object.values(data.questions).flat();
-  renderCategoryNav();
-  // Select first category and show its first question
-  const catKeys = Object.keys(state.categories);
-  if (catKeys.length && state.categories[catKeys[0]].length) {
-    selectQuestion(state.categories[catKeys[0]][0].id);
+  state.categories = data.categories || data.questions || {};
+  _expanded.clear();
+  // Auto-expand first category
+  const keys = Object.keys(state.categories);
+  if (keys.length) _expanded.add(keys[0]);
+
+  renderCategoryTree();
+
+  // Select first question
+  const firstCat = keys[0];
+  if (firstCat && state.categories[firstCat]?.length) {
+    selectQuestion(state.categories[firstCat][0].id, firstCat);
   }
 }
 
 // ── Sidebar rendering ──────────────────────────────────────────────
 
-function renderCategoryNav() {
-  els.categoryNav.innerHTML = "";
-  for (const category of Object.keys(state.categories)) {
+function countByStatus(questions) {
+  const counts = { learned: 0, learning: 0, "to learn": 0 };
+  for (const q of questions) {
+    const s = q.progress?.status || "to learn";
+    if (counts[s] !== undefined) counts[s]++;
+  }
+  return counts;
+}
+
+function progressPercent(counts) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return total ? Math.round((counts.learned / total) * 100) : 0;
+}
+
+function findLocalQuestion(id) {
+  for (const [category, questions] of Object.entries(state.categories)) {
+    const question = questions.find((q) => q.id === id);
+    if (question) return { category, question };
+  }
+  return null;
+}
+
+function updateLocalProgress(id, progress) {
+  const found = findLocalQuestion(id);
+  if (!found) return;
+  found.question.progress = progress || {};
+  if (state.selected?.id === id) {
+    state.selected.progress = found.question.progress;
+  }
+}
+
+function renderCategoryTree() {
+  els.categoryTree.innerHTML = "";
+
+  for (const [category, questions] of Object.entries(state.categories)) {
+    const counts = countByStatus(questions);
+    const pct = progressPercent(counts);
+    const isExpanded = _expanded.has(category);
+
+    // Category row
+    const row = document.createElement("div");
+    row.className = "category-row";
+
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "category-btn";
-    btn.textContent = category;
-    btn.addEventListener("click", () => showCategory(category));
-    els.categoryNav.appendChild(btn);
+    btn.className = "category-toggle";
+    btn.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+    btn.innerHTML = `
+      <span class="toggle-chevron">&#9660;</span>
+      <span class="category-label">${escapeHtml(category)}</span>
+      <span class="question-count">${questions.length}</span>
+    `;
+    btn.addEventListener("click", () => {
+      if (_expanded.has(category)) _expanded.delete(category);
+      else _expanded.add(category);
+      renderCategoryTree();
+    });
+
+    // Question list container (with height transition)
+    const container = document.createElement("div");
+    container.className = "question-list-container" + (isExpanded ? "" : " collapsed");
+    if (!isExpanded) container.style.height = "0";
+
+    const list = document.createElement("nav");
+    list.className = "question-list";
+    list.setAttribute("aria-label", `Questions in ${category}`);
+
+    for (const q of questions) {
+      const itemBtn = document.createElement("button");
+      itemBtn.type = "button";
+      const statusDot = q.progress?.score ? "passing" : "";
+      const scoreBadge = q.progress?.score ? `<span class="score-badge">${q.progress.score}</span>` : "";
+      const label = q.question.length > 56 ? `${q.question.slice(0, 56)}...` : q.question;
+      itemBtn.className = `question-item${q.id === state.selectedId ? " active" : ""}`;
+      itemBtn.innerHTML = `<span class="status-dot ${statusDot}"></span><span class="question-label">${escapeHtml(label)}</span>${scoreBadge}`;
+      itemBtn.title = q.question;
+      itemBtn.addEventListener("click", () => selectQuestion(q.id, category));
+
+      list.appendChild(itemBtn);
+    }
+
+    container.appendChild(list);
+
+    // Progress bar
+    const progBar = document.createElement("div");
+    progBar.className = "category-progress";
+    progBar.innerHTML = `<span class="progress-bar"><span class="progress-fill" style="width:${pct}%"></span></span><span>${counts.learned}/${questions.length}</span>`;
+
+    row.appendChild(btn);
+    row.appendChild(container);
+    row.appendChild(progBar);
+    els.categoryTree.appendChild(row);
   }
-}
-
-function renderQuestionList(categoryName) {
-  const questions = state.categories[categoryName] || [];
-  els.questionList.innerHTML = "";
-
-  for (const q of questions) {
-    const button = document.createElement("button");
-    button.type = "button";
-    const statusDot = q.progress?.score ? `<span class="status-dot passing"></span>` : `<span class="status-dot"></span>`;
-    const scoreBadge = q.progress?.score ? `<span class="score-badge">${q.progress.score}</span>` : "";
-    button.className = `question-item${q.id === state.selectedId ? " active" : ""}`;
-    button.innerHTML = `${statusDot}${escapeHtml(q.question).slice(0, 60)}…${scoreBadge}`;
-    button.title = q.question;
-    button.addEventListener("click", () => selectQuestion(q.id));
-    els.questionList.appendChild(button);
-  }
-}
-
-function showCategory(categoryName) {
-  state.selectedId = null;
-  renderQuestionList(categoryName);
 }
 
 // ── Question detail view ───────────────────────────────────────────
 
-async function selectQuestion(id) {
+async function selectQuestion(id, category) {
   state.selectedId = id;
   els.gradeBtn.disabled = true;
   try {
     const data = await api(`/api/mle/questions/${encodeURIComponent(id)}`);
     state.selected = data;
     els.title.textContent = data.question;
-    els.category.textContent = data.category;
+    els.category.textContent = data.category || category || "Unknown";
     els.questionText.textContent = data.question;
     els.answerInput.value = "";
     els.gradingResult.className = "grading-result empty";
@@ -111,14 +177,9 @@ async function selectQuestion(id) {
     els.referenceAnswer.classList.add("hidden");
     els.learningStatus.value = data.progress?.status || "to learn";
 
-    // Render full question list for this category
-    const catKeys = Object.keys(state.categories);
-    for (const key of catKeys) {
-      if (state.categories[key].find((q) => q.id === id)) {
-        renderQuestionList(key);
-        break;
-      }
-    }
+    // Re-render sidebar to update active highlight
+    updateLocalProgress(id, data.progress || {});
+    renderCategoryTree();
   } finally {
     els.gradeBtn.disabled = false;
   }
@@ -151,7 +212,6 @@ async function gradeAnswer() {
       return;
     }
 
-    // Show score and feedback
     const scoreColors = {
       1: "var(--danger)",
       2: "var(--warning)",
@@ -167,11 +227,14 @@ async function gradeAnswer() {
       <div class="feedback">${escapeHtml(result.feedback || "")}</div>
     `;
 
-    // Update progress status
-    els.learningStatus.value = result.score >= 4 ? "learned" : (state.selected.progress?.status || "learning");
-    saveProgress();
+    const progress = result.progress || {
+      status: result.score >= 4 ? "learned" : (state.selected.progress?.status || "learning"),
+      score: result.score,
+    };
+    updateLocalProgress(state.selected.id, progress);
+    els.learningStatus.value = progress.status || "learning";
+    renderCategoryTree();
 
-    // Show reference answer
     if (state.selected.reference_answer) {
       els.referenceText.textContent = state.selected.reference_answer;
       els.referenceAnswer.classList.remove("hidden");
@@ -188,22 +251,26 @@ async function gradeAnswer() {
 
 async function saveProgress() {
   if (!state.selectedId) return;
-  await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
+  const data = await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
     method: "PUT",
     body: JSON.stringify({ status: els.learningStatus.value }),
   });
+  updateLocalProgress(state.selectedId, data.progress);
+  renderCategoryTree();
 }
 
 async function resetProgress() {
   if (!state.selectedId) return;
-  await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
+  const data = await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
     method: "PUT",
-    body: JSON.stringify({ status: "to learn" }),
+    body: JSON.stringify({ status: "to learn", reset: true }),
   });
-  state.selected.progress = { status: "to learn", score: null, graded_at: null };
+  updateLocalProgress(state.selectedId, data.progress);
   els.learningStatus.value = "to learn";
   els.gradingResult.className = "grading-result empty";
+  els.gradingResult.innerHTML = "";
   els.referenceAnswer.classList.add("hidden");
+  renderCategoryTree();
 }
 
 // ── Busy indicator ─────────────────────────────────────────────────
@@ -219,7 +286,6 @@ els.gradeBtn.addEventListener("click", gradeAnswer);
 els.resetBtn.addEventListener("click", resetProgress);
 els.learningStatus.addEventListener("change", saveProgress);
 
-// Boot the app
 loadQuestions().catch((error) => {
   els.gradingResult.className = "grading-result";
   els.gradingResult.innerHTML = `<div class="feedback" style="color:var(--danger)">Startup error: ${escapeHtml(error.message)}</div>`;

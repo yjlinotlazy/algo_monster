@@ -29,7 +29,7 @@ SOLUTIONS_DIR = CONFIG_DIR / "solutions"
 PROGRESS_PATH = CONFIG_DIR / "progress.json"
 TIMEOUT_SECONDS = 3
 MLE_DIR = ROOT / "mle"
-MLE_QUESTIONS_PATH = MLE_DIR / "questions.json"
+MLE_CATEGORIES_PATH = MLE_DIR / "categories.json"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
 OPENAI_BASE_URL = os.environ.get(
     "OPENAI_BASE_URL", "http://localhost:11434/v1"
@@ -255,7 +255,7 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
         },
     ).encode("utf-8")
     req = urllib.request.Request(
-        OPENAI_BASE_URL + "/chat/completions",
+        OPENAI_BASE_URL.rstrip("/") + "/chat/completions",
         data=body,
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_API_KEY}"},
         method="POST",
@@ -263,6 +263,9 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
             raw = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        return {"ok": False, "error": f"LLM request failed: HTTP {exc.code} {detail}"}
     except (urllib.error.URLError, OSError) as exc:
         return {"ok": False, "error": f"LLM unavailable: {exc}"}
     except (json.JSONDecodeError, KeyError, TypeError):
@@ -287,26 +290,48 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
     return {"ok": True, "score": max(1, min(score, 5)), "feedback": feedback}
 
 
-def load_mle_questions() -> list[dict]:
-    """Load bundled MLE questions; returns empty list on missing/bad file."""
-    return load_json(MLE_QUESTIONS_PATH, [])
+def load_mle_categories() -> dict[str, list[dict]]:
+    """Load bundled MLE questions grouped by category."""
+    categories = load_json(MLE_CATEGORIES_PATH, {})
+    if not isinstance(categories, dict):
+        return {}
+
+    normalized: dict[str, list[dict]] = {}
+    for category, items in categories.items():
+        if not isinstance(items, list):
+            continue
+        valid_items = []
+        for item in items:
+            if isinstance(item, dict):
+                valid_items.append({"category": str(category), **item})
+        normalized[str(category)] = valid_items
+    return normalized
 
 
-def group_questions_by_category(questions: list[dict]) -> dict[str, list[dict]]:
-    """Return a dict mapping category → list of question objects."""
+def attach_mle_progress(categories: dict[str, list[dict]], progress: dict | None = None) -> dict[str, list[dict]]:
+    """Return category-keyed MLE questions with per-question progress attached."""
     groups: dict[str, list[dict]] = {}
-    for q in questions:
-        cat = q.get("category", "Uncategorized")
-        groups.setdefault(cat, []).append(q)
+    mle_progress = progress or {}
+    for category, questions in categories.items():
+        groups[category] = []
+        for q in questions:
+            question_id = q.get("id")
+            if not isinstance(question_id, str):
+                continue
+            item = dict(q)
+            item["progress"] = mle_progress.get(question_id, {})
+            groups[category].append(item)
     return groups
 
 
-def find_question(questions: list[dict], question_id: str) -> dict | None:
+def find_question(categories: dict[str, list[dict]], question_id: str) -> dict | None:
     """Return the matching question or None."""
-    for q in questions:
-        if q.get("id") == question_id:
-            return q
+    for questions in categories.values():
+        for q in questions:
+            if q.get("id") == question_id:
+                return q
     return None
+
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -372,14 +397,14 @@ class Handler(BaseHTTPRequestHandler):
 
         # ── MLE endpoints ──
         if path == "/api/mle/questions":
-            questions = load_mle_questions()
-            self.send_json({"questions": group_questions_by_category(questions)})
+            progress = load_progress().get("mle", {})
+            categories = attach_mle_progress(load_mle_categories(), progress)
+            self.send_json({"categories": categories, "questions": categories})
             return
 
         if path.startswith("/api/mle/questions/"):
-            question_id = path.removeprefix("/api/mle/questions/")
-            questions = load_mle_questions()
-            q = find_question(questions, question_id)
+            question_id = unquote(path.removeprefix("/api/mle/questions/"))
+            q = find_question(load_mle_categories(), question_id)
             if not q:
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
                 return
@@ -426,30 +451,35 @@ class Handler(BaseHTTPRequestHandler):
 
         # ── MLE progress update ──
         if path.startswith("/api/mle/progress/"):
-            question_id = path.removeprefix("/api/mle/progress/")
+            question_id = unquote(path.removeprefix("/api/mle/progress/"))
+            if not find_question(load_mle_categories(), question_id):
+                self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
+                return
             status = body.get("status")
-            if not isinstance(status, str):
+            if status not in ("to learn", "learning", "learned"):
                 self.send_error_json(
-                    HTTPStatus.BAD_REQUEST, "Expected field: status."
+                    HTTPStatus.BAD_REQUEST, "Invalid status."
                 )
                 return
             progress = load_progress()
             mle = progress.setdefault("mle", {})
             entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
             entry["status"] = status
-            score_val = body.get("score")
-            if isinstance(score_val, (int, float)):
+            if "score" in body and isinstance(body.get("score"), (int, float)):
+                score_val = body.get("score")
                 entry["score"] = int(score_val)
-                # Auto-advance: score >= 4 → learned
                 if int(score_val) >= 4 and status not in ("to learn",):
                     entry["status"] = "learned"
-            else:
+            elif status == "to learn" and body.get("reset", False):
                 entry["score"] = None
+                entry["graded_at"] = None
             mle[question_id] = entry
             progress["mle"] = mle
             save_progress(progress)
             self.send_json({"ok": True, "progress": entry})
             return
+
+        self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
 
     def handle_api_post(self, path: str) -> None:
         # ── MLE grading ──
@@ -462,8 +492,7 @@ class Handler(BaseHTTPRequestHandler):
                     HTTPStatus.BAD_REQUEST, "Expected question_id and answer."
                 )
                 return
-            questions = load_mle_questions()
-            q = find_question(questions, question_id)
+            q = find_question(load_mle_categories(), question_id)
             if not q:
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
                 return
@@ -479,10 +508,11 @@ class Handler(BaseHTTPRequestHandler):
                 if result["score"] >= 4:
                     entry["status"] = "learned"
                 else:
-                    entry.setdefault("status", "learning")
+                    entry["status"] = "learning"
                 mle[question_id] = entry
                 prog_progress["mle"] = mle
                 save_progress(prog_progress)
+                result["progress"] = entry
             self.send_json(result)
             return
         elif path == "/api/run":
@@ -517,12 +547,15 @@ class Handler(BaseHTTPRequestHandler):
                 progress[algo_id] = current
                 save_progress(progress)
             self.send_json(result)
+            return
+
+        self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
 
     def serve_static(self, path: str) -> None:
         # Route /algo and /mle to their product directories.
-        if path == "/algo":
+        if path in ("/algo", "/algo/"):
             path = "/algo_monster/index.html"
-        elif path == "/mle":
+        elif path in ("/mle", "/mle/"):
             path = "/mle_monster/index.html"
 
         if path == "/":

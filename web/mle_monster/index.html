@@ -4,17 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MLE Monster — Interview Prep</title>
-    <link rel="stylesheet" href="styles.css">
+    <script src="/theme.js?v=20260618" defer></script>
+    <link rel="stylesheet" href="/mle_monster/styles.css?v=20260618-mle-panels">
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand"><h1>MLE Monster</h1><p>Interview question practice</p></div>
-        <nav id="category-nav" class="category-nav" aria-label="Categories"></nav>
-        <nav id="question-list" class="question-list" aria-label="Questions"></nav>
+        <div id="category-tree" class="category-tree"></div>
       </aside>
 
-      <main class="workspace">
+      <main class="answer-pane">
         <header class="topbar">
           <div>
             <p id="category" class="category">Select a question</p>
@@ -31,12 +31,18 @@
           <textarea id="answer-input" placeholder="Write your answer here..." spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
           <button id="grade-btn" type="button" class="primary">Grade me</button>
         </section>
+      </main>
 
+      <aside class="llm-sidebar">
+        <div class="llm-header">
+          <h2>LLM answer</h2>
+          <p>Ollama grading and reference response</p>
+        </div>
         <section id="grading-result" class="grading-result empty">Grading results will appear here.</section>
         <section id="reference-answer" class="reference-answer hidden"><h3>Interview Answer</h3><div id="reference-text"></div></section>
-      </main>
+      </aside>
     </div>
 
-    <script src="app.js"></script>
+    <script src="/mle_monster/app.js?v=20260618-mle-panels"></script>
   </body>
 </html>
