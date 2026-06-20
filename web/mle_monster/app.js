@@ -3,6 +3,7 @@ const state = {
   /** @type {Record<string, Array<{id: string, question: string, reference_answer?: string}>>} */
   categories: {},
   selectedId: null,
+  selectedCategory: null,
   selected: null,
 };
 
@@ -18,6 +19,7 @@ const els = {
   referenceText: document.querySelector("#reference-text"),
   learningStatus: document.querySelector("#learning-status"),
   resetBtn: document.querySelector("#reset-btn"),
+  saveBtn: document.querySelector("#save-btn"),
 };
 
 const _expanded = new Set();
@@ -164,12 +166,14 @@ function renderCategoryTree() {
 
 async function selectQuestion(id, category) {
   state.selectedId = id;
+  state.selectedCategory = category || 'Unknown';
   els.gradeBtn.disabled = true;
   try {
     const data = await api(`/api/mle/questions/${encodeURIComponent(id)}`);
     state.selected = data;
     els.title.textContent = data.question;
     els.category.textContent = data.category || category || "Unknown";
+    state.selectedCategory = data.category || category || 'Unknown';
     els.questionText.textContent = data.question;
     els.answerInput.value = "";
     els.gradingResult.className = "grading-result empty";
@@ -239,12 +243,36 @@ async function gradeAnswer() {
       els.referenceText.textContent = state.selected.reference_answer;
       els.referenceAnswer.classList.remove("hidden");
     }
+
+    // Save graded answers in background; errors are non-fatal.
+    saveGradedAnswer().catch(() => {});
   } catch (error) {
     els.gradingResult.className = "grading-result";
     els.gradingResult.innerHTML = `<div class="feedback" style="color:var(--danger)">Error: ${escapeHtml(error.message)}</div>`;
   } finally {
     setBusy(false);
   }
+}
+
+// ── Save graded answers (user answer + LLM feedback) per category ──
+
+async function saveGradedAnswer() {
+  if (!state.selectedId || !state.selectedCategory) return;
+  const userAnswer = els.answerInput.value.trim();
+  const gradingEl = els.gradingResult.querySelector(".feedback");
+  const llmFeedback = gradingEl ? gradingEl.textContent : "";
+  const scoreText = els.gradingResult.querySelector(".score");
+  const score = scoreText ? parseInt(scoreText.textContent, 10) : null;
+  await api("/api/mle/graded/save", {
+    method: "POST",
+    body: JSON.stringify({
+      question_id: state.selectedId,
+      category: state.selectedCategory,
+      user_answer: userAnswer,
+      score: score,
+      llm_feedback: llmFeedback,
+    }),
+  });
 }
 
 // ── Progress ───────────────────────────────────────────────────────
@@ -281,9 +309,17 @@ function setBusy(isBusy) {
 }
 
 // ── Event wiring & bootstrap ───────────────────────────────────────
-
 els.gradeBtn.addEventListener("click", gradeAnswer);
 els.resetBtn.addEventListener("click", resetProgress);
+els.saveBtn.addEventListener("click", () => {
+  if (!state.selectedId) return;
+  els.saveBtn.textContent = "Saving…";
+  els.saveBtn.disabled = true;
+  saveGradedAnswer().finally(() => {
+    els.saveBtn.textContent = "Save";
+    els.saveBtn.disabled = false;
+  });
+});
 els.learningStatus.addEventListener("change", saveProgress);
 
 loadQuestions().catch((error) => {

@@ -27,14 +27,13 @@ CONFIG_DIR = (
 )
 SOLUTIONS_DIR = CONFIG_DIR / "solutions"
 PROGRESS_PATH = CONFIG_DIR / "progress.json"
+PROGRESS_MLE_PATH = CONFIG_DIR / "mle"
 TIMEOUT_SECONDS = 3
 MLE_TIMEOUT_SECONDS = int(os.environ.get("MLE_LLM_TIMEOUT", "180"))
 MLE_DIR = ROOT / "mle"
 MLE_CATEGORIES_PATH = MLE_DIR / "categories.json"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
-OPENAI_BASE_URL = os.environ.get(
-    "OPENAI_BASE_URL", "http://localhost:11434/v1"
-)
+OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1")
 
 
 def ensure_config() -> None:
@@ -78,6 +77,7 @@ def safe_algorithm_id(raw_id: str) -> str:
         raise KeyError(algo_id)
     return algo_id
 
+
 def _generate_test_code(test: dict, function_name: str) -> str:
     """Generate test code from input/output fields when 'code' is missing."""
     if "code" in test and isinstance(test["code"], str):
@@ -94,10 +94,13 @@ def _generate_test_code(test: dict, function_name: str) -> str:
     else:
         code += f"_result = {function_name}()\n"
     if expected is not None:
-        expected_str = json.dumps(expected) if not isinstance(expected, str) else expected
+        expected_str = (
+            json.dumps(expected) if not isinstance(expected, str) else expected
+        )
         code += f"assert _result == {expected_str}\n"
 
     return code
+
 
 def read_algorithm(algo_id: str) -> dict:
     """Read an algorithm's metadata, prompt, starter code, and test list."""
@@ -230,6 +233,7 @@ def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
 
 # ── MLE Grading ─────────────────────────────────────────────
 
+
 def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict:
     """Forward the question + user answer to the configured LLM and parse score/feedback."""
     system_prompt = (
@@ -238,7 +242,7 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
         "1=knows nothing, 2=partial understanding, 3=solid with gaps, "
         "4=strong but missing detail, 5=excellent and comprehensive.\n"
         "Respond ONLY with valid JSON of this shape: "
-        "{\"score\": <int 1-5>, \"feedback\": \"<text>\"}."
+        '{"score": <int 1-5>, "feedback": "<text>"}.'
     )
     body = json.dumps(
         {
@@ -258,7 +262,10 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
     req = urllib.request.Request(
         OPENAI_BASE_URL.rstrip("/") + "/chat/completions",
         data=body,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_API_KEY}"},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+        },
         method="POST",
     )
     try:
@@ -279,14 +286,18 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
         cleaned = content.strip()
         for fence in ("```json\n", "```\n", "```"):
             if cleaned.startswith(fence):
-                cleaned = cleaned[len(fence):]
+                cleaned = cleaned[len(fence) :]
         try:
             end_brace = cleaned.rfind("}")
             parsed = json.loads(cleaned[: end_brace + 1])
         except json.JSONDecodeError:
             return {"ok": False, "error": "LLM did not return valid score/feedback."}
 
-    score = int(parsed.get("score", 0)) if isinstance(parsed.get("score"), (int, float)) else 0
+    score = (
+        int(parsed.get("score", 0))
+        if isinstance(parsed.get("score"), (int, float))
+        else 0
+    )
     feedback = str(parsed.get("feedback", "")) if parsed else ""
     return {"ok": True, "score": max(1, min(score, 5)), "feedback": feedback}
 
@@ -309,7 +320,9 @@ def load_mle_categories() -> dict[str, list[dict]]:
     return normalized
 
 
-def attach_mle_progress(categories: dict[str, list[dict]], progress: dict | None = None) -> dict[str, list[dict]]:
+def attach_mle_progress(
+    categories: dict[str, list[dict]], progress: dict | None = None
+) -> dict[str, list[dict]]:
     """Return category-keyed MLE questions with per-question progress attached."""
     groups: dict[str, list[dict]] = {}
     mle_progress = progress or {}
@@ -332,7 +345,6 @@ def find_question(categories: dict[str, list[dict]], question_id: str) -> dict |
             if q.get("id") == question_id:
                 return q
     return None
-
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -458,13 +470,13 @@ class Handler(BaseHTTPRequestHandler):
                 return
             status = body.get("status")
             if status not in ("to learn", "learning", "learned"):
-                self.send_error_json(
-                    HTTPStatus.BAD_REQUEST, "Invalid status."
-                )
+                self.send_error_json(HTTPStatus.BAD_REQUEST, "Invalid status.")
                 return
             progress = load_progress()
             mle = progress.setdefault("mle", {})
-            entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+            entry = mle.get(
+                question_id, {"status": "to learn", "score": None, "graded_at": None}
+            )
             entry["status"] = status
             if "score" in body and isinstance(body.get("score"), (int, float)):
                 score_val = body.get("score")
@@ -502,9 +514,13 @@ class Handler(BaseHTTPRequestHandler):
             if result.get("ok") and isinstance(result.get("score"), int):
                 prog_progress = load_progress()
                 mle = prog_progress.setdefault("mle", {})
-                entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+                entry = mle.get(
+                    question_id,
+                    {"status": "to learn", "score": None, "graded_at": None},
+                )
                 entry["score"] = result["score"]
                 from datetime import datetime, timezone
+
                 entry["graded_at"] = datetime.now(timezone.utc).isoformat()
                 if result["score"] >= 4:
                     entry["status"] = "learned"
@@ -516,6 +532,33 @@ class Handler(BaseHTTPRequestHandler):
                 result["progress"] = entry
             self.send_json(result)
             return
+        # ── MLE graded answers save ──
+        if path == "/api/mle/graded/save":
+            body = self.read_body()
+            question_id = body.get("question_id", "") or ""
+            category = body.get("category", "") or "unknown"
+            user_answer = body.get("user_answer", "") or ""
+            score = body.get("score")
+            llm_feedback = body.get("llm_feedback", "") or ""
+            from datetime import datetime, timezone
+
+            ensure_config()
+            os.makedirs(PROGRESS_MLE_PATH, exist_ok=True)
+            print(f"{category}_{question_id}.json")
+            graded_file = PROGRESS_MLE_PATH / f"{category}_{question_id}.json"
+            graded_data = load_json(graded_file, {})
+            if not isinstance(graded_data, dict):
+                graded_data = {}
+            graded_data[question_id] = {
+                "user_answer": user_answer,
+                "score": score,
+                "llm_feedback": llm_feedback,
+                "saved_at": datetime.now(timezone.utc).isoformat(),
+            }
+            write_json(graded_file, graded_data)
+            self.send_json({"ok": True})
+            return
+
         elif path == "/api/run":
             body = self.read_body()
             algo_id = body.get("algorithm_id")
