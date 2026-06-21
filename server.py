@@ -355,6 +355,28 @@ def find_question(categories: dict[str, list[dict]], question_id: str) -> dict |
     return None
 
 
+def load_question_graded(question_id: str) -> dict | None:
+    """Load a previously saved graded answer for *question_id*."""
+    print("looking for", question_id)
+    if not question_id:
+        return None
+    graded_dir = PROGRESS_MLE_PATH
+    if not graded_dir.exists():
+        return None
+    graded_file = PROGRESS_MLE_PATH / f"{question_id}.json"
+    data = load_json(graded_file, {})
+    if not isinstance(data, dict):
+        return None
+    entry = data.get(question_id)
+    if entry and isinstance(entry, dict):
+        return entry
+    # Fallback: scan for a matching key (handles old storage format)
+    for k, v in data.items():
+        if k == question_id and isinstance(v, dict):
+            return v
+    return None
+
+
 class Handler(BaseHTTPRequestHandler):
     """HTTP request handler — serves static files and exposes /api/ endpoints."""
 
@@ -430,9 +452,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
                 return
             progress = load_progress().get("mle", {}).get(question_id, {})
-            self.send_json({**q, "progress": progress})
+            graded = load_question_graded(question_id)
+            self.send_json({**q, "progress": progress, "graded": graded})
             return
-        self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown endpoint.")
 
     def handle_api_put(self, path: str) -> None:
         body = self.read_body()
@@ -487,8 +509,8 @@ class Handler(BaseHTTPRequestHandler):
             )
             entry["status"] = status
             if "score" in body and isinstance(body.get("score"), (int, float)):
-                score_val = body.get("score")
-                entry["score"] = int(score_val)
+                score_val = int(body.get("score") or 0)
+                entry["score"] = score_val
                 if int(score_val) >= 4 and status not in ("to learn",):
                     entry["status"] = "learned"
             elif status == "to learn" and body.get("reset", False):
@@ -544,7 +566,6 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/mle/graded/save":
             body = self.read_body()
             question_id = body.get("question_id", "") or ""
-            category = body.get("category", "") or "unknown"
             user_answer = body.get("user_answer", "") or ""
             score = body.get("score")
             llm_feedback = body.get("llm_feedback", "") or ""
@@ -552,7 +573,7 @@ class Handler(BaseHTTPRequestHandler):
 
             ensure_config()
             os.makedirs(PROGRESS_MLE_PATH, exist_ok=True)
-            graded_file = PROGRESS_MLE_PATH / f"{category}_{question_id}.json"
+            graded_file = PROGRESS_MLE_PATH / f"{question_id}.json"
             graded_data = load_json(graded_file, {})
             if not isinstance(graded_data, dict):
                 graded_data = {}
