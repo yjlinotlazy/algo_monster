@@ -127,7 +127,8 @@ function renderCategoryTree() {
 
     // Question list container (with height transition)
     const container = document.createElement("div");
-    container.className = "question-list-container" + (isExpanded ? "" : " collapsed");
+    container.className =
+      "question-list-container" + (isExpanded ? "" : " collapsed");
     if (!isExpanded) container.style.height = "0";
 
     const list = document.createElement("nav");
@@ -138,8 +139,11 @@ function renderCategoryTree() {
       const itemBtn = document.createElement("button");
       itemBtn.type = "button";
       const statusDot = q.progress?.score ? "passing" : "";
-      const scoreBadge = q.progress?.score ? `<span class="score-badge">${q.progress.score}</span>` : "";
-      const label = q.question.length > 56 ? `${q.question.slice(0, 56)}...` : q.question;
+      const scoreBadge = q.progress?.score
+        ? `<span class="score-badge">${q.progress.score}</span>`
+        : "";
+      const label =
+        q.question.length > 56 ? `${q.question.slice(0, 56)}...` : q.question;
       itemBtn.className = `question-item${q.id === state.selectedId ? " active" : ""}`;
       itemBtn.innerHTML = `<span class="status-dot ${statusDot}"></span><span class="question-label">${escapeHtml(label)}</span>${scoreBadge}`;
       itemBtn.title = q.question;
@@ -166,26 +170,59 @@ function renderCategoryTree() {
 
 async function selectQuestion(id, category) {
   state.selectedId = id;
-  state.selectedCategory = category || 'Unknown';
+  state.selectedCategory = category || "Unknown";
   els.gradeBtn.disabled = true;
   try {
     const data = await api(`/api/mle/questions/${encodeURIComponent(id)}`);
     state.selected = data;
     els.title.textContent = data.question;
     els.category.textContent = data.category || category || "Unknown";
-    state.selectedCategory = data.category || category || 'Unknown';
+    state.selectedCategory = data.category || category || "Unknown";
     els.questionText.textContent = data.question;
-    els.answerInput.value = "";
-    els.gradingResult.className = "grading-result empty";
-    els.gradingResult.innerHTML = "";
-    els.referenceAnswer.classList.add("hidden");
     els.learningStatus.value = data.progress?.status || "to learn";
 
     // Re-render sidebar to update active highlight
     updateLocalProgress(id, data.progress || {});
     renderCategoryTree();
+
+    // Restore saved graded answer if one exists.
+    restoreGradedAnswer(data.graded);
   } finally {
     els.gradeBtn.disabled = false;
+  }
+}
+
+function restoreGradedAnswer(graded) {
+  if (!graded) return;
+
+  const scoreColors = {
+    1: "var(--danger)",
+    2: "var(--warning)",
+    3: "#7a6b00",
+    4: "var(--accent)",
+    5: "var(--success)",
+  };
+  const color = scoreColors[graded.score] || "var(--text)";
+
+  // Grading result with saved score and feedback.
+  els.gradingResult.className = "grading-result";
+  els.gradingResult.innerHTML = `
+    <div class="score" style="color:${color}">${graded.score} / 5</div>
+    <div class="feedback">${escapeHtml(graded.llm_feedback || "No feedback available.")}</div>
+  `;
+
+  // Restore user's answer if saved.
+  if (graded.user_answer !== undefined && graded.user_answer !== null) {
+    els.answerInput.value = graded.user_answer;
+  }
+
+  // Show reference answer if available.
+  if (graded.reference_answer) {
+    els.referenceText.textContent = graded.reference_answer;
+    els.referenceAnswer.classList.remove("hidden");
+  } else if (state.selected?.reference_answer) {
+    els.referenceText.textContent = state.selected.reference_answer;
+    els.referenceAnswer.classList.remove("hidden");
   }
 }
 
@@ -232,7 +269,10 @@ async function gradeAnswer() {
     `;
 
     const progress = result.progress || {
-      status: result.score >= 4 ? "learned" : (state.selected.progress?.status || "learning"),
+      status:
+        result.score >= 4
+          ? "learned"
+          : state.selected.progress?.status || "learning",
       score: result.score,
     };
     updateLocalProgress(state.selected.id, progress);
@@ -263,7 +303,7 @@ async function saveGradedAnswer() {
   const llmFeedback = gradingEl ? gradingEl.textContent : "";
   const scoreText = els.gradingResult.querySelector(".score");
   const score = scoreText ? parseInt(scoreText.textContent, 10) : null;
-  await api("/api/mle/graded/save", {
+  const res = await api("/api/mle/graded/save", {
     method: "POST",
     body: JSON.stringify({
       question_id: state.selectedId,
@@ -273,28 +313,36 @@ async function saveGradedAnswer() {
       llm_feedback: llmFeedback,
     }),
   });
+  return res.ok ? res : null;
 }
 
 // ── Progress ───────────────────────────────────────────────────────
 
 async function saveProgress() {
   if (!state.selectedId) return;
-  const data = await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
-    method: "PUT",
-    body: JSON.stringify({ status: els.learningStatus.value }),
-  });
+  const data = await api(
+    `/api/mle/progress/${encodeURIComponent(state.selectedId)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ status: els.learningStatus.value }),
+    },
+  );
   updateLocalProgress(state.selectedId, data.progress);
   renderCategoryTree();
 }
 
 async function resetProgress() {
   if (!state.selectedId) return;
-  const data = await api(`/api/mle/progress/${encodeURIComponent(state.selectedId)}`, {
-    method: "PUT",
-    body: JSON.stringify({ status: "to learn", reset: true }),
-  });
+  const data = await api(
+    `/api/mle/progress/${encodeURIComponent(state.selectedId)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ status: "to learn", reset: true }),
+    },
+  );
   updateLocalProgress(state.selectedId, data.progress);
   els.learningStatus.value = "to learn";
+  els.answerInput.value = "";
   els.gradingResult.className = "grading-result empty";
   els.gradingResult.innerHTML = "";
   els.referenceAnswer.classList.add("hidden");

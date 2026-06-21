@@ -584,7 +584,7 @@ class Handler(BaseHTTPRequestHandler):
                 "saved_at": datetime.now(timezone.utc).isoformat(),
             }
             write_json(graded_file, graded_data)
-            self.send_json({"ok": True})
+            self.send_json({**graded_data[question_id], "ok": True})
             return
 
         elif path == "/api/run":
