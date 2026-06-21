@@ -1,0 +1,32 @@
+[
+  {
+    "id": "deep_learning_activations",
+    "question": "Why do we use activation functions in neural networks? Compare ReLU, sigmoid, and tanh.",
+    "reference_answer": "Activation functions introduce non-linearity, enabling networks to learn complex decision boundaries. Without them, stacking layers would collapse to a single linear transformation. ReLU (max(0,x)) is preferred in hidden layers for its simplicity, sparsity, and mitigated vanishing gradient problem. Sigmoid ((1+e^(-x))^(-1)) outputs (0,1) \u2014 useful for binary classification outputs but suffers from vanishing gradients. Tanh outputs (-1,1), zero-centered like sigmoid but generally outperforms it in hidden layers."
+  },
+  {
+    "id": "deep_learning_normalization",
+    "question": "What is batch normalization and why does it help?",
+    "reference_answer": "Batch normalization normalizes layer inputs to zero mean and unit variance per mini-batch, then applies learnable scale (gamma) and shift (beta). Benefits: (1) Reduces internal covariate shift, allowing higher learning rates. (2) Acts as a mild regularizer due to batch-level noise. (3) Reduces sensitivity to weight initialization. It is typically placed before activation layers."
+  },
+  {
+    "id": "deep_learning_backprop",
+    "question": "Explain how backpropagation works in a neural network.",
+    "reference_answer": "Backpropagation computes gradients of the loss with respect to each weight using the chain rule, applied layer-by-layer from output to input. Forward pass: compute activations through each layer. Backward pass: compute error at the output, then propagate delta values backward \u2014 for layer l, delta_l = (W_{l+1}^T \u00b7 delta_{l+1}) \u2299 f'(z_l), where z_l is the pre-activation and f' is the derivative of the activation function. Gradients are dL/dW = delta \u00b7 A^{l-1}."
+  },
+  {
+    "id": "deep_learning_cnn",
+    "question": "Why are convolutional neural networks suitable for image data?",
+    "reference_answer": "CNNs exploit two key inductive biases of images: (1) Local connectivity \u2014 each neuron connects only to a small spatial region (receptive field), capturing local patterns like edges and textures. (2) Weight sharing \u2014 the same filter slides across the entire image, dramatically reducing parameters vs fully connected networks. This gives translation equivariance: features are detected regardless of position. Pooling layers add translation invariance by summarizing local regions."
+  },
+  {
+    "id": "deep_learning_lstm",
+    "question": "Why did LSTMs become popular for sequential data? What problem do they solve?",
+    "reference_answer": "LSTMs solve the vanishing gradient problem in standard RNNs through a gating mechanism: (1) Forget gate decides what to discard from cell state. (2) Input gate decides what new information to store. (3) Output gate controls what to expose as hidden state. The cell state acts as a 'conveyor belt' with additive updates, allowing gradients to flow unchanged across many timesteps. This lets LSTMs capture long-range dependencies that plain RNNs cannot."
+  },
+  {
+    "id": "deep_learning_dropout",
+    "question": "What is dropout and how does it work as a regularizer?",
+    "reference_answer": "Dropout randomly zeroes a fraction p of neurons during each training forward pass, preventing co-adaptation \u2014 no neuron can rely on specific others always being present. During inference, all neurons are active but outputs are scaled by (1-p) (or weights are scaled during training via inverted dropout). This effectively trains an ensemble of 2^n subnetworks that share weights, reducing overfitting. It works best in large networks with many parameters."
+  }
+]

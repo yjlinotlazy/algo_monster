@@ -1,0 +1,27 @@
+[
+  {
+    "id": "data_imbalanced",
+    "question": "How do you handle imbalanced datasets in classification?",
+    "reference_answer": "Techniques include: (1) Resampling \u2014 oversample minority class or undersample majority class. (2) Weighted loss \u2014 assign higher weights to minority samples. (3) Synthetic data \u2014 SMOTE creates synthetic minority examples via k-NN interpolation. (4) Threshold tuning \u2014 adjust decision threshold post-training. (5) Alternative metrics \u2014 use PR-AUC, F1 instead of accuracy. (6) Ensemble methods like balanced random forests or easyensemble that build diverse subsets."
+  },
+  {
+    "id": "data_feature_scaling",
+    "question": "Why do we normalize or standardize features? When does it matter?",
+    "reference_answer": "Normalization (scaling to [0,1]) and standardization (zero mean, unit variance) make features comparable in magnitude. It matters for: distance-based methods (k-NN, k-means), gradient-based optimization (ensures uniform learning rates across dimensions), regularization (penalizes coefficients equally), SVMs, and neural networks. It does NOT matter for tree-based methods (decision trees, random forests) which split on thresholds independent of scale."
+  },
+  {
+    "id": "data_train_val_split",
+    "question": "How do you split data into training, validation, and test sets? Why can't you use the test set for tuning?",
+    "reference_answer": "Typical splits: 70/15/15 or 80/10/10. Use stratified sampling for classification to maintain class distribution in each split. Time-series data should be split chronologically, not randomly. The test set must NEVER be used for any tuning decision (feature selection, hyperparameter choice, model architecture) because each decision leaks information from the test set into the training process \u2014 this is data leakage. Your final test accuracy will then overestimate true generalization by an unpredictable amount."
+  },
+  {
+    "id": "data_augmentation",
+    "question": "What are common data augmentation techniques for ML? When do they help?",
+    "reference_answer": "For images: rotation, flipping, cropping, color jittering, cutout/mixup. For text: synonym replacement, back-translation, random deletion. For tabular: adding noise, SMOTE for imbalanced classes. Augmentation increases effective dataset size and diversity, acting as regularization. It helps most when data is scarce or expensive to collect. The key constraint: augmented examples must preserve the label semantics \u2014 you can't rotate a digit '6' into a '9' for MNIST."
+  },
+  {
+    "id": "data_missing_values",
+    "question": "How do you handle missing values in a dataset? What are the tradeoffs of each approach?",
+    "reference_answer": "Options: (1) Delete \u2014 remove rows/columns with missing values; safe only if data is MCAR (missing completely at random) and the fraction is small. (2) Impute with mean/median/mode \u2014 simple but underestimates variance and distorts correlations. (3) Model-based imputation (k-NN, MICE) \u2014 preserves relationships better but more complex. (4) Mark missing as a separate category (for categorical features). (5) Use algorithms natively supporting missing values (XGBoost handles them internally)."
+  }
+]

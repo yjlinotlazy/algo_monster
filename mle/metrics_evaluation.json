@@ -1,0 +1,22 @@
+[
+  {
+    "id": "metrics_precision_recall",
+    "question": "When should you use precision vs recall as your primary metric?",
+    "reference_answer": "Use precision when the cost of false positives is high \u2014 e.g., spam detection (flagging good email as spam) or medical diagnosis of a dangerous condition. Use recall when the cost of false negatives is high \u2014 e.g., cancer screening, fraud detection, or safety-critical systems where missing a positive is worse than a false alarm. In general classification tasks with balanced costs, use F1-score or ROC-AUC as they combine both perspectives."
+  },
+  {
+    "id": "metrics_rocauc",
+    "question": "What does the AUC-ROC curve measure?",
+    "reference_answer": "AUC-ROC measures a binary classifier's ability to rank positive instances above negatives across all threshold settings. The ROC curve plots True Positive Rate (recall) vs False Positive Rate at various thresholds. AUC = probability that a randomly chosen positive ranks higher than a random negative. AUC = 1.0 means perfect separation; AUC = 0.5 is no better than random. It is threshold-independent and useful when class distribution varies, but can be overly optimistic with extreme class imbalance."
+  },
+  {
+    "id": "metrics_f1",
+    "question": "When is F1-score more appropriate than accuracy?",
+    "reference_answer": "F1-score is the harmonic mean of precision and recall, balancing both. It's preferred over accuracy when: (1) Classes are imbalanced \u2014 a model predicting all negatives could get high accuracy but F1=0 reveals the problem. (2) The cost of false positives and false negatives is roughly symmetric and important. Use macro-F1 for multi-class when you care equally about per-class performance, micro-F1 when you want class-weighted aggregate performance."
+  },
+  {
+    "id": "metrics_calibration",
+    "question": "What is model calibration and how do you assess it?",
+    "reference_answer": "A well-calibrated model outputs probabilities matching the true frequency of outcomes \u2014 e.g., among instances predicted as 80% positive, ~80% should actually be positive. Assessment: (1) Reliability diagrams (reliability curves) \u2014 plot predicted probability bins vs observed frequencies. (2) Expected Calibration Error (ECE) \u2014 weighted average of |accuracy - confidence| across bins. Calibrating techniques include Platt scaling and isotonic regression, especially important for LLMs whose softmax scores often overconfidently exaggerate uncertainty."
+  }
+]

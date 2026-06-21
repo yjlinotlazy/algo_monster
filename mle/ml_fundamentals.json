@@ -1,0 +1,27 @@
+[
+  {
+    "id": "ml_fundamentals_overfitting",
+    "question": "What is overfitting, and how can you prevent it?",
+    "reference_answer": "Overfitting occurs when a model learns the training data too well, including noise and outliers, leading to poor generalization on unseen data. Signs include high training accuracy but low validation accuracy. Prevention methods: (1) Regularization (L1/Lasso, L2/Ridge), (2) Early stopping during training, (3) Cross-validation for hyperparameter tuning, (4) More training data, (5) Dropout for neural networks, (6) Ensemble methods like bagging or random forests."
+  },
+  {
+    "id": "ml_fundamentals_bias_variance",
+    "question": "Explain the bias-variance tradeoff.",
+    "reference_answer": "The bias-variance tradeoff describes the tension between two sources of error in predictive models: bias (error from incorrect assumptions, causing underfitting) and variance (error from sensitivity to small fluctuations in training data, causing overfitting). High-bias models are too simple; high-variance models are too complex. The goal is to find the right model complexity that minimizes total error (bias\u00b2 + variance + irreducible error). Techniques like cross-validation help navigate this tradeoff."
+  },
+  {
+    "id": "ml_fundamentals_gradient_descent",
+    "question": "Compare stochastic gradient descent (SGD), mini-batch SGD, and batch gradient descent.",
+    "reference_answer": "Batch GD computes gradients over the entire dataset \u2014 stable convergence but slow and memory-intensive per step. SGD uses one sample at a time \u2014 fast updates with noisy gradients that oscillate but escape local minima more easily. Mini-batch SGD (typically 32\u2013256 samples) balances stability and speed, is parallelizable on GPUs, and is the standard in practice."
+  },
+  {
+    "id": "ml_fundamentals_confusion_matrix",
+    "question": "Explain the confusion matrix and derived metrics for binary classification.",
+    "reference_answer": "The confusion matrix is a 2x2 table: True Positives (TP), False Positives (FP), True Negatives (TN), False Negatives (FN). From these: Accuracy = (TP+TN)/(TP+FP+TN+FN) \u2014 misleading on imbalanced data. Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 = 2\u00b7precision\u00b7recall/(precision+recall). Specificity = TN/(TN+FP). The choice of metric depends on which error type is costlier."
+  },
+  {
+    "id": "ml_fundamentals_kmeans",
+    "question": "Explain the K-Means clustering algorithm. How do you choose k?",
+    "reference_answer": "K-Means iteratively: (1) Initialize k centroids randomly or via k-means++. (2) Assign each point to the nearest centroid. (3) Recompute centroids as the mean of assigned points. Repeat until convergence. Choosing k: (1) Elbow method \u2014 plot within-cluster sum of squares vs k and look for the 'elbow'. (2) Silhouette score \u2014 measures how similar a point is to its own cluster vs neighboring clusters; higher is better. (3) Domain knowledge if clustering serves a specific business purpose."
+  }
+]

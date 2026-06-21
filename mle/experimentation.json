@@ -1,0 +1,22 @@
+[
+  {
+    "id": "exp_ab_testing",
+    "question": "How do you design a valid A/B test for an ML model?",
+    "reference_answer": "Key design principles: (1) Random assignment \u2014 users or requests split randomly into control and treatment groups. (2) Sufficient power \u2014 calculate required sample size based on minimum detectable effect, alpha (typically 0.05), and power (typically 0.8). (3) Holdout period \u2014 run long enough to capture day-of-week cycles and avoid novelty effects. (4) Metrics \u2014 define primary (success metric) and guardrail metrics (e.g., latency, error rate). (5) Analysis \u2014 use appropriate statistical tests; check for peeking issues; apply corrections for multiple comparisons. (6) SRM check \u2014 verify no significant differences between groups before treatment."
+  },
+  {
+    "id": "exp_hyperparameter",
+    "question": "Compare grid search, random search, and Bayesian optimization for hyperparameter tuning.",
+    "reference_answer": "Grid search exhaustively tests all combinations in a predefined grid \u2014 simple but exponential in the number of parameters. Random search samples fixed N points randomly \u2014 often outperforms grid because not all hyperparameters are equally important; focusing budget on key ones is more efficient. Bayesian optimization builds a probabilistic surrogate (e.g., Gaussian process) to model the relationship between hyperparameters and performance, then selects next points by optimizing an acquisition function (e.g., EI). Best for expensive-to-evaluate settings with limited budgets."
+  },
+  {
+    "id": "exp_srm",
+    "question": "What is Sample Ratio Mismatch (SRM) and how do you detect it?",
+    "reference_answer": "SRM occurs when the observed ratio of users in A/B test groups differs significantly from the intended allocation ratio, indicating a randomization bug rather than true randomness. Detection: perform a chi-squared goodness-of-fit test comparing observed vs expected group sizes at the request/user level. If p < 0.05, SRM is present \u2014 do not trust the test results. Common causes: sampling at the wrong granularity (e.g., sessions instead of users), user-level filtering applied asymmetrically across groups, or bugs in the routing logic."
+  },
+  {
+    "id": "exp_novelty_hawthorne",
+    "question": "What are novelty and Hawthorne effects in A/B testing?",
+    "reference_answer": "Novelty effect: users behave differently simply because the interface looks new/changed, not because of inherent quality. It fades over days as users adapt. Hawthorne effect: users change behavior because they know they're being measured. Mitigations: (1) Run tests long enough to pass the novelty decay curve \u2014 typically 2-4 weeks minimum. (2) Compare against rolling baselines rather than pre-test periods. (3) Use holdout groups that persist across multiple experiments so learning effects stabilize."
+  }
+]

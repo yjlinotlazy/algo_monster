@@ -31,7 +31,6 @@ PROGRESS_MLE_PATH = CONFIG_DIR / "mle"
 TIMEOUT_SECONDS = 3
 MLE_TIMEOUT_SECONDS = int(os.environ.get("MLE_LLM_TIMEOUT", "180"))
 MLE_DIR = ROOT / "mle"
-MLE_CATEGORIES_PATH = MLE_DIR / "categories.json"
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1")
 
@@ -303,21 +302,30 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
 
 
 def load_mle_categories() -> dict[str, list[dict]]:
-    """Load bundled MLE questions grouped by category."""
-    categories = load_json(MLE_CATEGORIES_PATH, {})
-    if not isinstance(categories, dict):
-        return {}
-
-    normalized: dict[str, list[dict]] = {}
-    for category, items in categories.items():
-        if not isinstance(items, list):
+    """Load bundled MLE questions from per-category files under mle/."""
+    CATEGORIES = {
+        "ml_fundamentals.json": "ML fundamentals",
+        "deep_learning.json": "Deep learning",
+        "llm_ai.json": "LLM / AI",
+        "metrics_evaluation.json": "Metrics / Evaluation",
+        "data.json": "Data",
+        "productionization.json": "Productionization",
+        "experimentation.json": "Experimentation",
+    }
+    categories: dict[str, list[dict]] = {}
+    if not MLE_DIR.exists():
+        return categories
+    for fname, category in CATEGORIES.items():
+        path = MLE_DIR / fname
+        questions = load_json(path, [])
+        if not isinstance(questions, list):
             continue
-        valid_items = []
-        for item in items:
+        valid_items: list[dict] = []
+        for item in questions:
             if isinstance(item, dict):
-                valid_items.append({"category": str(category), **item})
-        normalized[str(category)] = valid_items
-    return normalized
+                valid_items.append({"category": category, **item})
+        categories[category] = valid_items
+    return categories
 
 
 def attach_mle_progress(
@@ -544,7 +552,6 @@ class Handler(BaseHTTPRequestHandler):
 
             ensure_config()
             os.makedirs(PROGRESS_MLE_PATH, exist_ok=True)
-            print(f"{category}_{question_id}.json")
             graded_file = PROGRESS_MLE_PATH / f"{category}_{question_id}.json"
             graded_data = load_json(graded_file, {})
             if not isinstance(graded_data, dict):

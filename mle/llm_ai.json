@@ -1,0 +1,27 @@
+[
+  {
+    "id": "llm_transformer",
+    "question": "What is the attention mechanism in transformers?",
+    "reference_answer": "Attention computes weighted averages of value vectors, where weights come from dot-product similarities between query and key vectors: Attention(Q,K,V) = softmax(QK^T / sqrt(d_k))V. The scaled dot-product uses 1/sqrt(d_k) to prevent softmax saturation for large dimensions. Multi-head attention runs this in parallel across multiple subspaces, letting the model attend to different representation positions simultaneously."
+  },
+  {
+    "id": "llm_tokenization",
+    "question": "What is tokenization and what are common approaches?",
+    "reference_answer": "Tokenization converts raw text into integer IDs the model processes. Approaches: (1) Word-level \u2014 splits on whitespace/punctuation; fails on OOV words. (2) Subword methods like BPE (Byte-Pair Encoding), WordPiece, or SentencePiece \u2014 learn a fixed vocabulary of common subwords and can handle any input by decomposing unknown words. Modern LLMs use byte-level BPE with vocab sizes of 30K\u2013150K tokens."
+  },
+  {
+    "id": "llm_fine_tuning",
+    "question": "What is the difference between fine-tuning and prompt engineering?",
+    "reference_answer": "Fine-tuning updates model weights via additional training on task-specific data, creating a permanently specialized model \u2014 effective for consistent behavior patterns and when compute budget justifies the cost. Prompt engineering modifies only the input text (via instructions, examples, or system prompts) without changing weights \u2014 cheaper, reversible, but may be inconsistent across inputs or hit context limits. In practice, both are used together; prompt engineering for quick iteration, fine-tuning for stable deployment."
+  },
+  {
+    "id": "llm_rag",
+    "question": "What is Retrieval-Augmented Generation (RAG) and why is it useful?",
+    "reference_answer": "RAG retrieves relevant documents from a knowledge base at inference time, then prepends them to the prompt so the LLM generates grounded answers. Benefits: (1) Reduces hallucination by grounding outputs in real data. (2) Keeps models updated without retraining \u2014 just update the index. (3) Allows citing sources. Key components: embedding model for retrieval, vector store for indexing/search, and a re-ranking stage to improve retrieval precision."
+  },
+  {
+    "id": "llm_sampling",
+    "question": "Compare temperature, top-k, and top-p (nucleus) sampling in LLM text generation.",
+    "reference_answer": "Temperature scales logits before softmax: low temp makes outputs more deterministic, high temp increases randomness. Top-k limits sampling to the k most likely next tokens. Top-p (nucleus) limits sampling to the smallest set of tokens whose cumulative probability exceeds p \u2014 it adapts dynamically to the distribution's shape. In practice, top-p with temperature ~0.7 is a robust default; top-k provides an additional safety bound for extreme tokens."
+  }
+]

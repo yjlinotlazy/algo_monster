@@ -1,0 +1,27 @@
+[
+  {
+    "id": "prod_deployment",
+    "question": "What are the key challenges in deploying a machine learning model to production?",
+    "reference_answer": "Key challenges: (1) Latency \u2014 inference must meet SLA requirements, often needing model compression, quantization, or distillation. (2) Scalability \u2014 handling variable traffic with autoscaling, caching, and batched inference. (3) Data drift \u2014 training-serving skew and distribution shift over time require monitoring. (4) Versioning \u2014 models, features, and data need reproducible version tracking. (5) Observability \u2014 logging inputs/outputs, detecting anomalies, and automated rollback. (6) Security \u2014 input validation, model theft prevention, and privacy compliance."
+  },
+  {
+    "id": "prod_model_monitoring",
+    "question": "How do you detect and handle data drift in production?",
+    "reference_answer": "Detection: (1) Statistical tests \u2014 KS test for distributions, PSI for feature-level drift. (2) Performance monitoring \u2014 track prediction metrics; a drop indicates potential drift. (3) Prediction distribution analysis \u2014 compare current vs historical prediction distributions. Handling: (1) Retraining pipelines triggered by drift thresholds. (2) Feature stores to ensure consistency between training and serving. (3) Shadow mode \u2014 run new models alongside production to validate before cutover. (4) Alerting on data quality metrics like missing values or out-of-range inputs."
+  },
+  {
+    "id": "prod_batch_vs_realtime",
+    "question": "Compare batch inference vs real-time (online) inference. When do you use each?",
+    "reference_answer": "Batch inference processes predictions in large groups at scheduled intervals \u2014 efficient, cost-effective, suited for non-urgent downstream tasks (recommendations refreshed daily, offline analytics). Real-time inference responds to individual requests with sub-second latency \u2014 required for interactive apps, fraud detection, chatbots. Tradeoffs: batch has higher throughput per dollar and cheaper infrastructure; real-time requires always-on services, autoscaling, and careful capacity planning. Hybrid approaches (near-real-time streaming) can balance both."
+  },
+  {
+    "id": "prod_model_compression",
+    "question": "What techniques reduce model size/latency for deployment?",
+    "reference_answer": "(1) Quantization \u2014 represent weights in lower precision (FP32 \u2192 INT8), reducing memory by 4x with minor accuracy loss. (2) Pruning \u2014 remove insignificant weights/nodes; unstructured or magnitude-based structured pruning. (3) Knowledge distillation \u2014 train a small 'student' to mimic a large 'teacher.' (4) Low-rank factorization / SVD \u2014 approximate large weight matrices as products of smaller ones. (5) Architecture choices \u2014 MobileNet, TinyBERT, efficient transformer variants designed for edge."
+  },
+  {
+    "id": "prod_canary_deploy",
+    "question": "What is a canary deployment and why use it for ML models?",
+    "reference_answer": "Canary deployment routes a small fraction of traffic to the new model while keeping most on the existing version. For ML: (1) Detects performance regression early \u2014 if the canary's metrics drop, rollback before widespread impact. (2) Validates real-world data distribution against training assumptions. (3) Allows gradual ramp-up (e.g., 5% \u2192 25% \u2192 50% \u2192 100%). Key: must compare models on identical traffic distributions and use statistical significance tests for metrics like latency, error rate, or business KPIs."
+  }
+]
