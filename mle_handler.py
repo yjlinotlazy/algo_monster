@@ -9,7 +9,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from utils import MLE_DIR, MODEL_CONFIGS, PROGRESS_MLE_PATH, _load_llm_config, load_json, write_json
+from utils import MLE_DIR, PROGRESS_MLE_PATH, _load_llm_config, load_json
 
 MLE_TIMEOUT_SECONDS = 180
 
@@ -90,7 +90,9 @@ def grade_answer(
     question_id: str, question_text: str, user_answer: str, model_type: str = "ollama"
 ) -> dict:
     """Forward the question + user answer to the configured LLM and parse score/feedback."""
-    cfg = MODEL_CONFIGS.get(model_type, MODEL_CONFIGS["ollama"])
+    configs = _load_llm_config()
+    cfg = configs.get(model_type, configs["ollama"])
+    print("Calling", cfg)
     base_url = cfg["base_url"]
     api_key = cfg["api_key"]
     model_name = cfg["model"]
@@ -101,17 +103,25 @@ def grade_answer(
         "4=strong but missing detail, 5=excellent and comprehensive.\n"
         'Respond ONLY with valid JSON of this shape: {"score": <int 1-5>, "feedback": "<text>"}.'
     )
-    body = json.dumps({
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Question: {question_text}\n\nCandidate's answer:\n{user_answer}"},
-        ],
-    }).encode("utf-8")
+    body = json.dumps(
+        {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": f"Question: {question_text}\n\nCandidate's answer:\n{user_answer}",
+                },
+            ],
+        }
+    ).encode("utf-8")
     req = urllib.request.Request(
         base_url.rstrip("/") + "/chat/completions",
         data=body,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
         method="POST",
     )
     try:
@@ -132,13 +142,17 @@ def grade_answer(
         cleaned = content.strip()
         for fence in ("```json\n", "```\n", "```"):
             if cleaned.startswith(fence):
-                cleaned = cleaned[len(fence):]
+                cleaned = cleaned[len(fence) :]
         try:
             end_brace = cleaned.rfind("}")
             parsed = json.loads(cleaned[: end_brace + 1])
         except json.JSONDecodeError:
             return {"ok": False, "error": "LLM did not return valid score/feedback."}
 
-    score = int(parsed.get("score", 0)) if isinstance(parsed.get("score"), (int, float)) else 0
+    score = (
+        int(parsed.get("score", 0))
+        if isinstance(parsed.get("score"), (int, float))
+        else 0
+    )
     feedback = str(parsed.get("feedback", "")) if parsed else ""
     return {"ok": True, "score": max(1, min(score, 5)), "feedback": feedback}
