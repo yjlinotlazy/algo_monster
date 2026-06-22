@@ -1,0 +1,17 @@
+{
+    "ollama": {
+        "base_url": "http://localhost:11434/v1",
+        "api_key": "",
+        "model": "qwen-large2"
+    },
+    "gpt": {
+        "base_url": "https://api.openai.com/v1",
+        "api_key": "",
+        "model": "gpt-4o-mini"
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com/v1",
+        "api_key": "",
+        "model": "deepseek-chat"
+    }
+}

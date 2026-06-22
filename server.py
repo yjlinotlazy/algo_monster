@@ -31,8 +31,110 @@ PROGRESS_MLE_PATH = CONFIG_DIR / "mle"
 TIMEOUT_SECONDS = 3
 MLE_TIMEOUT_SECONDS = int(os.environ.get("MLE_LLM_TIMEOUT", "180"))
 MLE_DIR = ROOT / "mle"
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "sk-placeholder")
-OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "http://localhost:11434/v1")
+
+# Model defaults -- fallbacks are placeholders.
+# Actual keys/models can be overridden by environment variables or a local config/llm.json file.
+DEFAULT_CONFIGS = {
+    "ollama": {
+        "base_url": "http://localhost:11434/v1",
+        "api_key": "dummy",
+        "model": "qwen-large2",
+    },
+    "gpt": {
+        "base_url": "https://api.openai.com/v1",
+        "api_key": "sk-placeholder",
+        "model": "gpt-4o-mini",
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com/v1",
+        "api_key": "sk-placeholder",
+        "model": "deepseek-chat",
+    },
+    "google": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "api_key": "sk-placeholder",
+        "model": "gemini-3.5-flash",
+    },
+}
+
+
+def _load_llm_config() -> dict[str, dict]:
+    """Load LLM configs from env vars or config/llm.json file."""
+    # Start with defaults
+    configs = {k: dict(v) for k, v in DEFAULT_CONFIGS.items()}
+
+    # 2. Apply local file defaults first (config/llm.json) - these are just fallbacks if env vars aren't set.
+    llm_config_path = Path(__file__).resolve().parent / "config" / "llm.json"
+    if llm_config_path.exists():
+        try:
+            local_cfg = json.loads(llm_config_path.read_text())
+            if isinstance(local_cfg, dict):
+                for key in ["ollama", "gpt", "deepseek"]:
+                    if key in local_cfg and isinstance(local_cfg[key], dict):
+                        configs[key].update(local_cfg[key])
+        except json.JSONDecodeError:
+            pass  # ignore malformed JSON
+
+    # 1. Apply environment variable overrides (these win over everything)
+    ollama_base = (
+        os.environ.get("OLLAMA_BASE_URL") or DEFAULT_CONFIGS["ollama"]["base_url"]
+    )
+    ollama_key = (
+        os.environ.get("OLLAMA_API_KEY") or DEFAULT_CONFIGS["ollama"]["api_key"]
+    )
+    ollama_model = os.environ.get("OLLAMA_MODEL") or DEFAULT_CONFIGS["ollama"]["model"]
+
+    gpt_base = os.environ.get("GPT_BASE_URL") or DEFAULT_CONFIGS["gpt"]["base_url"]
+    gpt_key = (
+        os.environ.get("GPT_API_KEY")
+        or os.environ.get("OPENAI_API_KEY")
+        or DEFAULT_CONFIGS["gpt"]["api_key"]
+    )
+    gpt_model = os.environ.get("GPT_MODEL") or DEFAULT_CONFIGS["gpt"]["model"]
+
+    deepseek_base = (
+        os.environ.get("DEEPSEEK_BASE_URL") or DEFAULT_CONFIGS["deepseek"]["base_url"]
+    )
+    deepseek_key = (
+        os.environ.get("DEEPSEEK_API_KEY") or DEFAULT_CONFIGS["deepseek"]["api_key"]
+    )
+    deepseek_model = (
+        os.environ.get("DEEPSEEK_MODEL") or DEFAULT_CONFIGS["deepseek"]["model"]
+    )
+
+    google_base = (
+        os.environ.get("GOOGLE_BASE_URL") or DEFAULT_CONFIGS["google"]["base_url"]
+    )
+    google_key = (
+        os.environ.get("GOOGLE_API_KEY") or DEFAULT_CONFIGS["google"]["api_key"]
+    )
+    google_model = os.environ.get("GOOGLE_MODEL") or DEFAULT_CONFIGS["google"]["model"]
+
+    configs.update(
+        {
+            "ollama": {
+                "base_url": ollama_base,
+                "api_key": ollama_key,
+                "model": ollama_model,
+            },
+            "gpt": {"base_url": gpt_base, "api_key": gpt_key, "model": gpt_model},
+            "deepseek": {
+                "base_url": deepseek_base,
+                "api_key": deepseek_key,
+                "model": deepseek_model,
+            },
+            "google": {
+                "base_url": google_base,
+                "api_key": google_key,
+                "model": google_model,
+            },
+        }
+    )
+
+    return configs
+
+
+MODEL_CONFIGS = _load_llm_config()
 
 
 def ensure_config() -> None:
@@ -233,8 +335,15 @@ def run_tests(algo_id: str, code: str, test_index: int | None) -> dict:
 # ── MLE Grading ─────────────────────────────────────────────
 
 
-def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict:
+def grade_answer(
+    question_id: str, question_text: str, user_answer: str, model_type: str = "ollama"
+) -> dict:
     """Forward the question + user answer to the configured LLM and parse score/feedback."""
+    cfg = MODEL_CONFIGS.get(model_type, MODEL_CONFIGS["ollama"])
+    print("grading by", cfg)
+    base_url = cfg["base_url"]
+    api_key = cfg["api_key"]
+    model_name = cfg["model"]
     system_prompt = (
         "You are a grading assistant for ML interview questions. "
         "Grade the candidate's answer on a scale of 1-5: "
@@ -245,7 +354,7 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
     )
     body = json.dumps(
         {
-            "model": os.environ.get("OLLAMA_MODEL", "qwen-large2"),
+            "model": model_name,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {
@@ -259,11 +368,11 @@ def grade_answer(question_id: str, question_text: str, user_answer: str) -> dict
         },
     ).encode("utf-8")
     req = urllib.request.Request(
-        OPENAI_BASE_URL.rstrip("/") + "/chat/completions",
+        base_url.rstrip("/") + "/chat/completions",
         data=body,
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
         },
         method="POST",
     )
@@ -531,6 +640,7 @@ class Handler(BaseHTTPRequestHandler):
             body = self.read_body()
             question_id = body.get("question_id") or ""
             answer = body.get("answer", "")
+            model_type = body.get("model_type", "ollama")
             if not isinstance(question_id, str) or not isinstance(answer, str):
                 self.send_error_json(
                     HTTPStatus.BAD_REQUEST, "Expected question_id and answer."
@@ -540,7 +650,9 @@ class Handler(BaseHTTPRequestHandler):
             if not q:
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
                 return
-            result = grade_answer(question_id, q["question"], answer)
+            result = grade_answer(
+                question_id, q["question"], answer, model_type=model_type
+            )
             # Persist progress on successful grading
             if result.get("ok") and isinstance(result.get("score"), int):
                 prog_progress = load_progress()

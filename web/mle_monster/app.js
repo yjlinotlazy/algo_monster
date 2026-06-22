@@ -194,6 +194,12 @@ async function selectQuestion(id, category) {
 }
 
 function restoreGradedAnswer(graded) {
+  // Always reset UI state first to prevent persistence from previous questions.
+  els.answerInput.value = "";
+  els.gradingResult.className = "grading-result empty";
+  els.gradingResult.innerHTML = "";
+  els.referenceAnswer.classList.add("hidden");
+
   if (!graded) return;
 
   const scoreColors = {
@@ -245,6 +251,7 @@ async function gradeAnswer() {
       body: JSON.stringify({
         question_id: state.selected.id,
         answer: answer,
+        model_type: els.modelSelector.value || "ollama",
       }),
     });
 
