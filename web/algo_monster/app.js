@@ -118,7 +118,9 @@ async function loadAlgorithms() {
 function renderAlgorithmList() {
   const query = state.filter.toLowerCase();
   const algorithms = state.algorithms.filter((algorithm) => {
-    return `${algorithm.title} ${algorithm.category}`.toLowerCase().includes(query);
+    return `${algorithm.title} ${algorithm.category}`
+      .toLowerCase()
+      .includes(query);
   });
 
   els.list.innerHTML = "";
@@ -183,7 +185,9 @@ function renderTests() {
       </div>
       <button class="run-one" type="button">Run</button>
     `;
-    row.querySelector("button").addEventListener("click", () => runTests(index));
+    row
+      .querySelector("button")
+      .addEventListener("click", () => runTests(index));
     els.tests.appendChild(row);
   });
 }
@@ -210,9 +214,14 @@ async function saveProgress() {
     method: "PUT",
     body: JSON.stringify({ status: els.learningStatus.value }),
   });
-  const item = state.algorithms.find((algorithm) => algorithm.id === state.selectedId);
+  const item = state.algorithms.find(
+    (algorithm) => algorithm.id === state.selectedId,
+  );
   if (item) {
-    item.progress = { ...(item.progress || {}), status: els.learningStatus.value };
+    item.progress = {
+      ...(item.progress || {}),
+      status: els.learningStatus.value,
+    };
   }
   renderAlgorithmList();
 }
@@ -235,7 +244,9 @@ async function runTests(testIndex = null) {
     });
     showResults(result);
     if (testIndex === null) {
-      const item = state.algorithms.find((algorithm) => algorithm.id === state.selectedId);
+      const item = state.algorithms.find(
+        (algorithm) => algorithm.id === state.selectedId,
+      );
       if (item) {
         item.progress = { ...(item.progress || {}), passing: result.ok };
       }
@@ -254,18 +265,21 @@ async function runTests(testIndex = null) {
 // ── Results display ────────────────────────────────────────────────
 
 function showResults(result) {
-  state.resultsByName = new Map(result.results.map((item) => [item.name, item]));
+  state.resultsByName = new Map(
+    result.results.map((item) => [item.name, item]),
+  );
   const summary = result.summary || { passed: 0, failed: 0, total: 0 };
   els.summary.textContent = `${summary.passed}/${summary.total} passed`;
   els.results.className = "results";
-  els.results.innerHTML = result.results
-    .map((item) => {
-      const hasStdout = item.stdout && item.stdout.trim();
-      const hasError = item.error;
-      // Look up the test input code by name.
-      const test = (state.selected?.tests || []).find((t) => t.name === item.name);
-      const inputCode = test ? escapeHtml(test.code) : null;
-      return `
+  els.results.innerHTML = result.results.map((item) => {
+    const hasStdout = item.stdout && item.stdout.trim();
+    const hasError = item.error;
+    // Look up the test input code by name.
+    const test = (state.selected?.tests || []).find(
+      (t) => t.name === item.name,
+    );
+    const inputCode = test ? escapeHtml(test.code) : null;
+    return `
         <div class="result-item">
           <div class="result-title">
             <span>${escapeHtml(item.name)}</span>
@@ -276,7 +290,7 @@ function showResults(result) {
           ${hasError ? `<pre class="result-error">${escapeHtml(item.error)}</pre>` : ""}
         </div>
       `;
-    })
+  });
   renderTests();
 }
 
@@ -293,6 +307,7 @@ function setBusy(isBusy) {
   els.saveBtn.disabled = isBusy;
   els.runBtn.disabled = isBusy;
   els.learningStatus.disabled = isBusy;
+  els.clearBtn.disabled = isBusy;
 }
 
 // ── Event wiring & bootstrap ───────────────────────────────────────
@@ -319,9 +334,27 @@ els.editor.addEventListener("keydown", (event) => {
   }
 });
 
+// This function resets the editor back to the original template (starter code) for the current algorithm.
+// It fetches fresh starter from the server rather than relying on potentially-stale memory state.
+async function resetToTemplate() {
+  if (!state.selectedId) return;
+  setBusy(true);
+  try {
+    const { starter } = await api(
+      `/api/algorithms/${encodeURIComponent(state.selectedId)}/__starter`,
+    );
+    els.editor.value = starter || "";
+
+    // Also clear test results so the user sees a full reset.
+    clearResults();
+  } finally {
+    setBusy(false);
+  }
+}
+
 els.saveBtn.addEventListener("click", saveSolution);
 els.runBtn.addEventListener("click", () => runTests(null));
-els.clearBtn.addEventListener("click", clearResults);
+els.clearBtn.addEventListener("click", resetToTemplate);
 els.learningStatus.addEventListener("change", saveProgress);
 
 // Boot the app; catch startup errors.

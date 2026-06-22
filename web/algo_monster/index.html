@@ -1,40 +1,94 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Algo Monster</title>
-    <script src="/theme.js?v=20260618" defer></script>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand"><h1>Algo Monster</h1><p>Algorithm practice</p></div>
-        <div class="sidebar-tools"><input id="search" type="search" placeholder="Search algorithms" autocomplete="off"></div>
-        <nav id="algorithm-list" class="algorithm-list" aria-label="Algorithms"></nav>
-      </aside>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Algo Monster</title>
+        <script src="/theme.js?v=20260618" defer></script>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="app-shell">
+            <aside class="sidebar">
+                <div class="brand">
+                    <h1>Algo Monster</h1>
+                    <p>Algorithm practice</p>
+                </div>
+                <div class="sidebar-tools">
+                    <input
+                        id="search"
+                        type="search"
+                        placeholder="Search algorithms"
+                        autocomplete="off"
+                    />
+                </div>
+                <nav
+                    id="algorithm-list"
+                    class="algorithm-list"
+                    aria-label="Algorithms"
+                ></nav>
+            </aside>
 
-      <main class="workspace">
-        <header class="topbar">
-          <div><p id="category" class="category">Select an algorithm</p><h2 id="title">Algo Monster</h2></div>
-          <div class="actions">
-            <button id="run-btn" type="button" class="primary">Run All</button>
-            <button id="clear-btn" type="button" class="ghost">Clear</button>
-            <label class="status-control"><span>Status</span><select id="learning-status"><option value="to learn">to learn</option><option value="learning">learning</option><option value="learned">learned</option></select></label>
-            <button id="save-btn" type="button">Save</button>
-          </div>
-        </header>
+            <main class="workspace">
+                <header class="topbar">
+                    <div>
+                        <p id="category" class="category">
+                            Select an algorithm
+                        </p>
+                        <h2 id="title">Algo Monster</h2>
+                    </div>
+                    <div class="actions">
+                        <button id="run-btn" type="button" class="primary">
+                            Run All
+                        </button>
+                        <label class="status-control"
+                            ><span>Status</span
+                            ><select id="learning-status">
+                                <option value="to learn">to learn</option>
+                                <option value="learning">learning</option>
+                                <option value="learned">learned</option>
+                            </select></label
+                        >
+                        <button id="save-btn" type="button">Save</button>
+                        <button id="clear-btn" type="button">Reset</button>
+                    </div>
+                </header>
 
-        <section class="main-grid">
-          <section class="prompt-panel"><div id="prompt" class="prompt"></div></section>
-          <section class="editor-panel"><div class="panel-header"><span>solution.py</span><span id="save-state" class="muted">Not saved</span></div><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea></section>
-          <section class="tests-panel"><div class="panel-header"><span>Tests</span><span id="summary" class="muted">No run yet</span></div><div id="tests" class="tests"></div></section>
-          <section class="results-panel"><div class="panel-header"><span>Results</span></div><div id="results" class="results empty">Run tests to see output.</div></section>
-        </section>
-      </main>
-    </div>
+                <section class="main-grid">
+                    <section class="prompt-panel">
+                        <div id="prompt" class="prompt"></div>
+                    </section>
+                    <section class="editor-panel">
+                        <div class="panel-header">
+                            <span>solution.py</span
+                            ><span id="save-state" class="muted"
+                                >Not saved</span
+                            >
+                        </div>
+                        <textarea
+                            id="editor"
+                            spellcheck="false"
+                            autocomplete="off"
+                            autocapitalize="off"
+                        ></textarea>
+                    </section>
+                    <section class="tests-panel">
+                        <div class="panel-header">
+                            <span>Tests</span
+                            ><span id="summary" class="muted">No run yet</span>
+                        </div>
+                        <div id="tests" class="tests"></div>
+                    </section>
+                    <section class="results-panel">
+                        <div class="panel-header"><span>Results</span></div>
+                        <div id="results" class="results empty">
+                            Run tests to see output.
+                        </div>
+                    </section>
+                </section>
+            </main>
+        </div>
 
-    <script src="app.js"></script>
-  </body>
+        <script src="/algo_monster/app.js"></script>
+    </body>
 </html>
