@@ -1,0 +1,82 @@
+[
+    {
+        "id": "agentic_ai_agent_definition",
+        "question": "What is an AI agent?"
+    },
+    {
+        "id": "agentic_ai_vs_chatbot",
+        "question": "How is an AI agent different from a chatbot?"
+    },
+    {
+        "id": "agentic_ai_vs_workflow",
+        "question": "How is an AI agent different from a workflow?"
+    },
+    {
+        "id": "agentic_ai_use_cases",
+        "question": "When should you use an agent, and when should you not?"
+    },
+    {
+        "id": "agentic_ai_tool_calling",
+        "question": "How does tool/function calling work?"
+    },
+    {
+        "id": "agentic_ai_tool_selection",
+        "question": "How does an agent select the right tool?"
+    },
+    {
+        "id": "agentic_ai_infinite_loops",
+        "question": "How do you prevent infinite loops in an agent?"
+    },
+    {
+        "id": "agentic_ai_react",
+        "question": "What is ReAct, and why is it effective?"
+    },
+    {
+        "id": "agentic_ai_react_vs_plan_execute",
+        "question": "What is the difference between ReAct and Plan-and-Execute?"
+    },
+    {
+        "id": "agentic_ai_reflection",
+        "question": "What is reflection/self-critique in agent systems?"
+    },
+    {
+        "id": "agentic_ai_memory_types",
+        "question": "What types of memory do agents use?"
+    },
+    {
+        "id": "agentic_ai_rag_vs_memory",
+        "question": "What is the difference between RAG and memory?"
+    },
+    {
+        "id": "agentic_ai_context_window",
+        "question": "How do you manage context window limitations?"
+    },
+    {
+        "id": "agentic_ai_safety",
+        "question": "What is prompt injection, and how do you defend against it?"
+    },
+    {
+        "id": "agentic_ai_reliability",
+        "question": "How do you make an agent reliable and safe?"
+    },
+    {
+        "id": "agentic_ai_evaluation_methodology",
+        "question": "How do you evaluate an agent?"
+    },
+    {
+        "id": "agentic_ai_metrics",
+        "question": "What metrics would you use to measure agent performance?"
+    },
+    {
+        "id": "agentic_ai_multi_agent",
+        "question": "When should you use a multi-agent system?"
+    },
+    {
+        "id": "agentic_ai_design_coding",
+        "question": "Design a coding agent from end to end."
+    },
+    {
+        "id": "agentic_ai_design_research",
+        "question": "Design a research agent from end to end."
+    }
+]

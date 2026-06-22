@@ -11,6 +11,7 @@
       "--border": "#d8dee2",
       "--accent": "#226f54",
       "--accent-dark": "#18543f",
+      "--title-text": "#18543f",
       "--danger": "#b42318",
       "--warning": "#9a6700",
       "--success": "#1f7a4d",
@@ -88,27 +89,39 @@
 
   function deriveTheme(colors) {
     const sorted = [...colors].sort((a, b) => luminance(a) - luminance(b));
-    const bg = sorted[sorted.length - 1];
-    const text = sorted[0];
+    const lightestHex = sorted[sorted.length - 1];
+    const bgRgb = hexToRgb(lightestHex);
+
+    // Title remains the second darkest color from the palette
+    const titleText = sorted.length > 1 ? sorted[1] : sorted[0];
+    
+    // Normal text is now strictly black for best readability
+    const normalText = "#000000";
+
     const accentSource =
       [...colors]
-        .filter((hex) => hex !== bg && hex !== text)
+        .filter((hex) => hex !== lightestHex && hex !== sorted[0])
         .sort((a, b) => saturation(b) - saturation(a) || luminance(a) - luminance(b))[0] ||
       sorted[Math.floor(sorted.length / 2)];
-    const panel = mix(bg, "#ffffff", 0.92);
-    const panelAlt = mix(bg, accentSource, 0.12);
-    const muted = mix(text, bg, 0.58);
-    const border = mix(text, bg, 0.87);
+
+    const panel = mix(lightestHex, "#ffffff", 0.92);
+    const panelAlt = mix(lightestHex, accentSource, 0.12);
+
+    // Use original logic for muted/border based on the palette's actual darkest color
+    // to ensure borders and secondary text still look part of the theme.
+    const muted = mix(sorted[0], lightestHex, 0.58);
+    const border = mix(sorted[0], lightestHex, 0.87);
 
     return {
-      "--bg": bg,
+      "--bg": `rgba(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b}, 0.5)`,
       "--panel": panel,
       "--panel-alt": panelAlt,
-      "--text": text,
+      "--text": normalText,
+      "--title-text": titleText,
       "--muted": muted,
       "--border": border,
       "--accent": accentSource,
-      "--accent-dark": mix(accentSource, text, 0.24),
+      "--accent-dark": mix(accentSource, sorted[0], 0.24),
       "--danger": VANILLA.vars["--danger"],
       "--warning": VANILLA.vars["--warning"],
       "--success": VANILLA.vars["--success"],
@@ -182,6 +195,7 @@
           };
         }
       }
+      console.log("Loaded themes for selection:", Object.keys(themeState.themes));
       themeState.loaded = true;
     } catch {
       // Leave the vanilla theme in place if the palette file cannot be loaded.

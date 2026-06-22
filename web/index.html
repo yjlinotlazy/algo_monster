@@ -46,6 +46,37 @@
                 width: min(920px, 100%);
             }
 
+            .landing-card {
+                background: var(--panel);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 2.5rem 3rem 2rem;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+            }
+
+            @media (max-width: 600px) {
+                .landing-card {
+                    padding: 1.5rem;
+                }
+
+                body {
+                    padding: 16px;
+                }
+
+                .landing-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+
+                .theme-picker {
+                    justify-items: start;
+                }
+
+                .product-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
             .landing-header {
                 display: flex;
                 align-items: center;
@@ -58,6 +89,7 @@
                 font-size: 32px;
                 line-height: 1.1;
                 margin: 0;
+                color: var(--title-text);
             }
 
             .brand-block h1 + h1 {
@@ -104,7 +136,7 @@
             }
 
             .product-card {
-                background: var(--panel);
+                background: var(--panel-alt);
                 border: 1px solid var(--border);
                 border-radius: 12px;
                 padding: 2rem;
@@ -123,11 +155,11 @@
             .product-card h2 {
                 font-size: 22px;
                 margin-bottom: 0.75rem;
-                color: var(--accent-dark);
+                color: var(--title-text);
             }
 
             .product-card p {
-                color: var(--muted);
+                color: var(--title-text);
                 font-size: 14px;
                 margin-bottom: 1.5rem;
                 line-height: 1.6;
@@ -139,68 +171,51 @@
                 color: var(--accent);
                 font-weight: 600;
             }
-
-            @media (max-width: 600px) {
-                body {
-                    padding: 16px;
-                }
-
-                .landing-header {
-                    flex-direction: column;
-                    align-items: flex-start;
-                }
-
-                .theme-picker {
-                    justify-items: start;
-                }
-
-                .product-grid {
-                    grid-template-columns: 1fr;
-                }
-            }
         </style>
     </head>
     <body>
         <div class="landing">
-            <div class="landing-header">
-                <div class="brand-block">
-                    <h1>Algo Monster</h1>
-                    <h1>老霸王学习机</h1>
-                    <p class="subtitle">
-                        Local interview practice — powered by Ollama, no cloud
-                        needed.
-                    </p>
+            <div class="landing-card">
+                <div class="landing-header">
+                    <div class="brand-block">
+                        <h1>Algo Monster</h1>
+                        <h1>老霸王学习机</h1>
+                        <p class="subtitle">
+                            Local interview practice — powered by Ollama, no cloud
+                            needed.
+                        </p>
+                    </div>
+                    <label class="theme-picker">
+                        Theme
+                        <select data-theme-picker>
+                            <option value="Vanilla">Vanilla</option>
+                        </select>
+                    </label>
                 </div>
-                <label class="theme-picker">
-                    Theme
-                    <select data-theme-picker>
-                        <option value="Vanilla">Vanilla</option>
-                    </select>
-                </label>
-            </div>
 
-            <p class="landing-copy">祝早日脱离苦海，进入另一个深海</p>
+                <p class="landing-copy">祝早日脱离苦海，进入另一个深海</p>
 
-            <div class="product-grid">
-                <a href="/algo" class="product-card">
-                    <h2>Algo Monster</h2>
-                    <p>
-                        Practice coding algorithms with a built-in test runner.
-                        Solve problems, run your code against tests, and track
-                        progress.
-                    </p>
-                    <span class="arrow">Launch →</span>
-                </a>
+                <div class="product-grid">
+                    <a href="/algo" class="product-card">
+                        <h2>Algo Monster</h2>
+                        <p>
+                            Practice coding algorithms with a built-in test runner.
+                            Solve problems, run your code against tests, and track
+                            progress.
+                        </p>
+                        <span class="arrow">Launch →</span>
+                    </a>
 
-                <a href="/mle" class="product-card">
-                    <h2>MLE Monster</h2>
-                    <p>
-                        Prepare for ML interview questions. Write your answers,
-                        get instant grading from a local LLM, and track your
-                        mastery.
-                    </p>
-                    <span class="arrow">Launch →</span>
-                </a>
+                    <a href="/mle" class="product-card">
+                        <h2>MLE Monster</h2>
+                        <p>
+                            Prepare for ML interview questions. Write your answers,
+                            get instant grading from a local LLM, and track your
+                            mastery.
+                        </p>
+                        <span class="arrow">Launch →</span>
+                    </a>
+                </div>
             </div>
         </div>
     </body>

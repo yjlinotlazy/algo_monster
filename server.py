@@ -307,6 +307,7 @@ def load_mle_categories() -> dict[str, list[dict]]:
         "ml_fundamentals.json": "ML fundamentals",
         "deep_learning.json": "Deep learning",
         "llm_ai.json": "LLM / AI",
+        "agentic_ai.json": "Agentic AI",
         "metrics_evaluation.json": "Metrics / Evaluation",
         "data.json": "Data",
         "productionization.json": "Productionization",

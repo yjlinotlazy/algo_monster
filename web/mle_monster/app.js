@@ -13,6 +13,7 @@ const els = {
   category: document.querySelector("#category"),
   questionText: document.querySelector("#question-text"),
   answerInput: document.querySelector("#answer-input"),
+  modelSelector: document.querySelector("#model-selector"),
   gradeBtn: document.querySelector("#grade-btn"),
   gradingResult: document.querySelector("#grading-result"),
   referenceAnswer: document.querySelector("#reference-answer"),

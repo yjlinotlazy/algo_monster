@@ -97,7 +97,7 @@ button:disabled {
 .brand h1 {
   font-size: 18px;
   margin: 0;
-  color: var(--accent-dark);
+  color: var(--title-text);
 }
 
 .brand p {
@@ -394,9 +394,7 @@ button:disabled {
   margin-bottom: 8px;
 }
 
-.grading-result .feedback {
-  color: var(--muted);
-  line-height: 1.5;
+.grading-result .feedback {  color: #000000;  line-height: 1.5;
 }
 
 .reference-answer {
