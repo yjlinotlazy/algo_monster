@@ -12,12 +12,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from utils import ALGORITHMS_DIR, CONFIG_DIR, MLE_DIR, MODEL_CONFIGS, PROGRESS_MLE_PATH, STATIC_DIR
 from algorithm_handler import (
     algorithm_ids,
     load_progress,
     read_algorithm,
     read_solution,
+    run_tests,
     safe_algorithm_id,
     save_progress,
     save_solution,
@@ -32,7 +32,16 @@ from mle_handler import (
 )
 
 # Import utility functions needed by handlers or directly used in server logic where cleaner
-from utils import load_json, write_json  # for direct usage if needed elsewhere
+from utils import (  # for direct usage if needed elsewhere
+    ALGORITHMS_DIR,
+    CONFIG_DIR,
+    MLE_DIR,
+    MODEL_CONFIGS,
+    PROGRESS_MLE_PATH,
+    STATIC_DIR,
+    load_json,
+    write_json,
+)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -41,7 +50,10 @@ class Handler(BaseHTTPRequestHandler):
     server_version = "AlgoMonster/0.1"
 
     def log_message(self, format: str, *args) -> None:
-        sys.stderr.write("%s - - [%s] %s\n" % (self.client_address[0], self.log_date_time_string(), format % args))
+        sys.stderr.write(
+            "%s - - [%s] %s\n"
+            % (self.client_address[0], self.log_date_time_string(), format % args)
+        )
 
     def do_GET(self) -> None:
         try:
@@ -72,7 +84,12 @@ class Handler(BaseHTTPRequestHandler):
             items = []
             for algo_id in sorted(algorithm_ids()):
                 meta = load_json(ALGORITHMS_DIR / algo_id / "meta.json", {})
-                item = {"id": algo_id, "title": meta.get("title", algo_id), "category": meta.get("category", ""), "progress": progress.get(algo_id, {})}
+                item = {
+                    "id": algo_id,
+                    "title": meta.get("title", algo_id),
+                    "category": meta.get("category", ""),
+                    "progress": progress.get(algo_id, {}),
+                }
                 items.append(item)
             self.send_json({"algorithms": items})
             return
@@ -109,7 +126,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def handle_api_put(self, path: str) -> None:
         body = self.read_body()
-        
+
         # Algorithm save solution
         if path.startswith("/api/solutions/"):
             try:
@@ -119,7 +136,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             code = body.get("code")
             if not isinstance(code, str):
-                self.send_error_json(HTTPStatus.BAD_REQUEST, "Expected string field: code.")
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected string field: code."
+                )
                 return
             save_solution(algo_id, code)
             self.send_json({"ok": True})
@@ -156,7 +175,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             progress = load_progress()
             mle = progress.setdefault("mle", {})
-            entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+            entry = mle.get(
+                question_id, {"status": "to learn", "score": None, "graded_at": None}
+            )
             entry["status"] = status
             if "score" in body and isinstance(body.get("score"), (int, float)):
                 score_val = int(body.get("score") or 0)
@@ -184,18 +205,25 @@ class Handler(BaseHTTPRequestHandler):
             answer = body.get("answer", "")
             model_type = body.get("model_type", "ollama")
             if not isinstance(question_id, str) or not isinstance(answer, str):
-                self.send_error_json(HTTPStatus.BAD_REQUEST, "Expected question_id and answer.")
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected question_id and answer."
+                )
                 return
             q = find_question(load_mle_categories(), question_id)
             if not q:
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Question not found.")
                 return
-            
-            result = grade_answer(question_id, q["question"], answer, model_type=model_type)
+
+            result = grade_answer(
+                question_id, q["question"], answer, model_type=model_type
+            )
             if result.get("ok") and isinstance(result.get("score"), int):
                 prog_progress = load_progress()
                 mle = prog_progress.setdefault("mle", {})
-                entry = mle.get(question_id, {"status": "to learn", "score": None, "graded_at": None})
+                entry = mle.get(
+                    question_id,
+                    {"status": "to learn", "score": None, "graded_at": None},
+                )
                 entry["score"] = result["score"]
                 entry["graded_at"] = datetime.now(timezone.utc).isoformat()
                 if result["score"] >= 4:
@@ -216,7 +244,7 @@ class Handler(BaseHTTPRequestHandler):
             user_answer = body.get("user_answer", "") or ""
             score = body.get("score")
             llm_feedback = body.get("llm_feedback", "") or ""
-            
+
             validate_config_algo()  # ensure dirs exist
             graded_file = PROGRESS_MLE_PATH / f"{question_id}.json"
             graded_data = load_json(graded_file, {})
@@ -239,7 +267,9 @@ class Handler(BaseHTTPRequestHandler):
             code = body.get("code")
             test_index = body.get("test_index")
             if not isinstance(algo_id, str) or not isinstance(code, str):
-                self.send_error_json(HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code.")
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "Expected algorithm_id and code."
+                )
                 return
             try:
                 algo_id = safe_algorithm_id(algo_id)
@@ -247,7 +277,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_error_json(HTTPStatus.NOT_FOUND, "Unknown algorithm.")
                 return
             if test_index is not None and not isinstance(test_index, int):
-                self.send_error_json(HTTPStatus.BAD_REQUEST, "test_index must be an integer.")
+                self.send_error_json(
+                    HTTPStatus.BAD_REQUEST, "test_index must be an integer."
+                )
                 return
 
             result = run_tests(algo_id, code, test_index)
@@ -275,7 +307,10 @@ class Handler(BaseHTTPRequestHandler):
         else:
             clean = Path(unquote(path).lstrip("/"))
             file_path = (STATIC_DIR / clean).resolve()
-            if STATIC_DIR.resolve() not in file_path.parents and file_path != STATIC_DIR.resolve():
+            if (
+                STATIC_DIR.resolve() not in file_path.parents
+                and file_path != STATIC_DIR.resolve()
+            ):
                 self.send_error(HTTPStatus.FORBIDDEN)
                 return
 
@@ -283,7 +318,9 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND)
             return
 
-        content_type = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        content_type = (
+            mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        )
         data = file_path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type)
