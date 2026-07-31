@@ -58,6 +58,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         try:
             parsed = urlparse(self.path)
+            if parsed.path == "/health":
+                self.send_json({"ok": True, "status": "healthy"})
+                return
             if parsed.path.startswith("/api/"):
                 self.handle_api_get(parsed.path)
             else:
