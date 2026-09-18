@@ -7,10 +7,13 @@ import argparse
 import json
 import mimetypes
 import sys
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
+
+from server_logging import CountingWriter, RequestLogger, content_length
 
 from algorithm_handler import (
     algorithm_ids,
@@ -48,6 +51,26 @@ class Handler(BaseHTTPRequestHandler):
     """HTTP request handler — serves static files and exposes /api/ endpoints."""
 
     server_version = "AlgoMonster/0.1"
+    request_logger = RequestLogger(Path(__file__).resolve().parent, "algo_monster")
+
+    def handle_one_request(self) -> None:
+        started_at = time.time()
+        self._telemetry_status = HTTPStatus.INTERNAL_SERVER_ERROR
+        original_wfile = self.wfile
+        counted_wfile = CountingWriter(original_wfile)
+        self.wfile = counted_wfile
+        try:
+            super().handle_one_request()
+        finally:
+            self.wfile = original_wfile
+            try:
+                self.request_logger.record(target=getattr(self, "path", ""), method=getattr(self, "command", "UNKNOWN"), status=getattr(self, "_telemetry_status", 500), request_size=content_length(self.headers), response_size=counted_wfile.bytes_written, started_at=started_at)
+            except Exception:
+                pass
+
+    def send_response(self, code, message=None):
+        self._telemetry_status = int(code)
+        super().send_response(code, message)
 
     def log_message(self, format: str, *args) -> None:
         sys.stderr.write(

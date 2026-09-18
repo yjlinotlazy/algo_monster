@@ -2,3 +2,4 @@
 __pycache__
 *pi-session*
 .codegraph
+server_logs/
